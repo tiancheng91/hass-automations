@@ -1,0 +1,14 @@
+- alias: HASS - 初始化
+  id: hass_init
+  description: ""
+  mode: single
+  triggers:
+    - event: start
+      trigger: homeassistant
+  conditions: []
+  actions:
+    - metadata: {}
+      data:
+        mode: light
+        name: Metro Red
+      action: frontend.set_theme

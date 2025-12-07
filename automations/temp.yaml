@@ -1,0 +1,90 @@
+- alias: 夜间主卧-温度高-开空调
+  id: bedroom_climate_on
+  initial_state: true
+  trigger:
+    - platform: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      attribute: current_temperature
+      above: 29
+      for:
+        minutes: 5  # 温度持续高于30度2分钟后触发
+  condition:
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
+    - condition: time
+      after: '01:00'
+      before: '07:00'
+    - condition: state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      state: 'off'  # 确保空调当前是关闭状态
+  action:
+    - service: climate.turn_on
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+
+- alias: 夜间主卧-温度低-关空调
+  id: bedroom_climate_off
+  initial_state: true
+  trace:
+    stored_traces: 20
+  trigger:
+    - platform: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      attribute: current_temperature
+      below: 28
+      for:
+        minutes: 10  # 温度持续低于27度3分钟后触发
+    - platform: time
+      at: "02:00:00"  # 每天02:00定时检查
+  condition:
+    - condition: time
+      after: '01:00'
+      before: '08:00'
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+          state: 'off'  # 确保空调当前是开启状态
+    - condition: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      attribute: current_temperature
+      below: 28
+
+  action:
+    - service: climate.turn_off
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+
+- alias: 主卧-关闭设备
+  id: bedroom_turn_off_all
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "on"
+      to: "off"
+      for:
+        minutes: 10
+  action:
+    - service: climate.turn_off
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+    - service: fan.turn_off
+      entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan  # 关闭风扇
+
+- alias: 主卧-开启设备
+  id: bedroom_turn_on
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "off"
+      to: "on"
+      for:
+        minutes: 5
+  condition:
+    - condition: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      attribute: current_temperature
+      above: 26
+  action:
+    - service: fan.turn_on
+      entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan  # 开启风扇

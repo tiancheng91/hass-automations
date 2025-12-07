@@ -1,0 +1,14 @@
+- alias: 助手 - 出门天气提醒
+  description: ""
+  mode: single
+  triggers:
+    - at: "08:30:00"
+      trigger: time
+  conditions:
+    - condition: state
+      entity_id: weather.home
+      state: rainy
+  actions:
+    - data:
+        text: 🌧️今日有雨,出门请带伞
+      action: shell_command.send_msg

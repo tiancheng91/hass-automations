@@ -1,0 +1,102 @@
+# nnleaf 灯光自动化配置
+# ========== 单击按钮逻辑 - 切换开关状态 ==========
+- alias: 书房 - nnleaf 切换开关状态
+  id: light_nnleaf_switch_toggle
+  trigger:
+    - platform: event
+      event_type: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_click_e_2_1012
+  action:
+    # 检查两个灯的状态
+    - variables:
+        light1_state: "{{ states('light.nnleaf_cn_250150441_strips_s_2_light') }}"
+        light2_state: "{{ states('switch.giot_cn_1099597079_v6oodm_on_p_2_1') }}"
+        light1_is_on: "{{ light1_state == 'on' }}"
+        light2_is_on: "{{ light2_state == 'on' }}"
+        states_match: "{{ light1_is_on == light2_is_on }}"
+    - choose:
+        # 如果状态不一致，都切换为开
+        - conditions:
+            - condition: template
+              value_template: "{{ not states_match }}"
+          sequence:
+            - service: light.turn_on
+              target:
+                entity_id: light.nnleaf_cn_250150441_strips_s_2_light
+            - service: switch.turn_on
+              target:
+                entity_id: switch.giot_cn_1099597079_v6oodm_on_p_2_1
+        # 如果状态一致，切换开关状态
+        - conditions:
+            - condition: template
+              value_template: "{{ states_match }}"
+          sequence:
+            - service: light.toggle
+              target:
+                entity_id: light.nnleaf_cn_250150441_strips_s_2_light
+            - service: switch.toggle
+              target:
+                entity_id: switch.giot_cn_1099597079_v6oodm_on_p_2_1
+
+# ========== 双击按钮逻辑 - 切换light1亮度和模式 ==========
+- alias: 书房 - nnleaf 切换亮度模式
+  id: light_nnleaf_brightness
+  trigger:
+    - platform: event
+      event_type: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_double_click_e_2_1013
+  action:
+    # 切换到下一个模式（4种状态循环：橙色50%、80%、100%、模式252）
+    - variables:
+        current_mode: "{{ states('input_number.nnleaf_light_mode') | int }}"
+        next_mode: "{{ (current_mode + 1) % 4 }}"
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.nnleaf_light_mode
+      data:
+        value: "{{ next_mode }}"
+    - choose:
+        # 模式0：橙色50%
+        - conditions: "{{ next_mode == 0 }}"
+          sequence:
+            - service: number.set_value
+              target:
+                entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
+              data: { "value": 0 }
+            - service: light.turn_on
+              target:
+                entity_id: light.nnleaf_cn_250150441_strips_s_2_light
+              data:
+                rgb_color: [255, 183, 124]
+                brightness_pct: 50
+        # 模式1：橙色80%
+        - conditions: "{{ next_mode == 1 }}"
+          sequence:
+            - service: number.set_value
+              target:
+                entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
+              data: { "value": 0 }
+            - service: light.turn_on
+              target:
+                entity_id: light.nnleaf_cn_250150441_strips_s_2_light
+              data:
+                rgb_color: [255, 183, 124]
+                brightness_pct: 70
+        # 模式2：橙色100%
+        - conditions: "{{ next_mode == 2 }}"
+          sequence:
+            - service: number.set_value
+              target:
+                entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
+              data: { "value": 0 }
+            - service: light.turn_on
+              target:
+                entity_id: light.nnleaf_cn_250150441_strips_s_2_light
+              data:
+                rgb_color: [255, 183, 124]
+                brightness_pct: 90
+        # 模式3：场景252
+        - conditions: "{{ next_mode == 3 }}"
+          sequence:
+            - service: number.set_value
+              target:
+                entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
+              data: { "value": 252 }

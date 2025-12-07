@@ -1,0 +1,11 @@
+# Home Assistant 配置示例
+# 
+# ============================================
+# 在 configuration.yaml 中添加以下配置：
+#
+# # 包含所有 input_number 配置
+# input_number: !include_dir_merge_named inputs/
+#
+# # 包含所有 automation 配置
+# automation: !include_dir_list automations/
+#

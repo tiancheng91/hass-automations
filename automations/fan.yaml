@@ -1,0 +1,41 @@
+- alias: 主卧 - 风扇转速自动调节
+  id: bedroom_fan_level
+  mode: single
+  description: 根据夜间主卧温度自动调节风扇转速
+  triggers:
+    - platform: state
+      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      attribute: current_temperature
+      for: "00:05:00"
+
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
+
+    - condition: time
+      after: "23:00:00"
+      before: "08:50:00"
+
+  actions:
+    - service: number.set_value
+      target:
+        entity_id: number.dmaker_cn_659430584_p5c_speed_level_p_8_1
+      data:
+        value: >
+          {% set current_temp = state_attr(
+            'climate.090615_cn_proxy_681594875_00003_ktf',
+            'current_temperature'
+          ) | int(0) %}
+
+          {% if current_temp >= 31 %}
+            70
+          {% elif current_temp >= 30 %}
+            40
+          {% elif current_temp >= 29 %}
+            25
+          {% elif current_temp >= 28 %}
+            10
+          {% else %}
+            5
+          {% endif %}

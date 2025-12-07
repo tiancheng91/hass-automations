@@ -1,0 +1,8 @@
+# nnleaf 灯光相关输入变量
+nnleaf_light_mode:
+  name: nnleaf双击模式状态
+  initial: 0
+  min: 0
+  max: 3
+  step: 1
+  mode: box
