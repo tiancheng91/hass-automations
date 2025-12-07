@@ -3,8 +3,14 @@
 - alias: 书房 - nnleaf 切换开关状态
   id: light_nnleaf_switch_toggle
   trigger:
-    - platform: event
-      event_type: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_click_e_2_1012
+    - platform: state
+      entity_id: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_click_e_2_1012
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   action:
     # 检查两个灯的状态
     - variables:
@@ -41,8 +47,14 @@
 - alias: 书房 - nnleaf 切换亮度模式
   id: light_nnleaf_brightness
   trigger:
-    - platform: event
-      event_type: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_double_click_e_2_1013
+    - platform: state
+      entity_id: event.090615_cn_blt_3_1gkcm9n48cc00_btsw1_double_click_e_2_1013
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   action:
     # 切换到下一个模式（4种状态循环：橙色50%、80%、100%、模式252）
     - variables:

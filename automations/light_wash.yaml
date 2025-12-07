@@ -6,8 +6,14 @@
   mode: single
   description: 检测到移动时，根据时间段调高灯光亮度（渐进调整）
   trigger:
-    - platform: event
-      event_type: event.linp_cn_blt_3_1glkll4soco00_hs1bb1_motion_detected_e_2_1008
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1glkll4soco00_hs1bb1_motion_detected_e_2_1008
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   action:
     - variables:
         # 获取当前时间（小时）

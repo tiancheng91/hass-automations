@@ -11,14 +11,21 @@
   mode: single
   description: 单击无线开关按键，反转对应设备的开关状态
   trigger:
-    - platform: event
-      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_click_e_5_1012
-      event_data:
-        event_type: 单击
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_click_e_5_1012
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.attributes.get('event_type') == '单击' }}"
   action:
     - variables:
-        # 尝试多种可能的键名，支持数字和字符串类型
-        button_type: "{{ trigger.event.data.get('按键类型', trigger.event.data.get('button_type', trigger.event.data.get('key', ''))) | string }}"
+        # 从状态属性中获取按键类型
+        button_type: "{{ trigger.to_state.attributes.get('按键类型', trigger.to_state.attributes.get('button_type', trigger.to_state.attributes.get('key', ''))) | string }}"
         button_num: "{{ button_type | int(0) }}"
     - choose:
         # 按键1 - 主灯 左键
@@ -60,13 +67,19 @@
   mode: single
   description: 记录无线开关双击事件的 payload 明细到 logbook
   trigger:
-    - platform: event
-      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   action:
     - service: logbook.log
       data:
         name: 无线开关双击事件
-        message: "Payload明细: {{ trigger.event.data | to_json }}"
+        message: "Payload明细: {{ trigger.to_state.attributes | to_json }}"
         entity_id: automation.light_living_double_click_log
 
 # ========== 双击事件 - 按键1切换灯1模式 ==========
@@ -75,12 +88,18 @@
   mode: single
   description: 按键1双击时，切换灯1亮度模式（月光、休闲、会客循环）
   trigger:
-    - platform: event
-      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   condition:
     - condition: template
       value_template: >
-        {% set button_type = trigger.event.data.get('按键类型', trigger.event.data.get('button_type', trigger.event.data.get('key', ''))) | string %}
+        {% set button_type = trigger.to_state.attributes.get('按键类型', trigger.to_state.attributes.get('button_type', trigger.to_state.attributes.get('key', ''))) | string %}
         {% set button_num = button_type | int(0) %}
         {{ button_type == '1' or button_num == 1 }}
   action:
@@ -113,12 +132,18 @@
   mode: single
   description: 记录无线开关长按事件的 payload 明细到 logbook
   trigger:
-    - platform: event
-      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_long_press_e_5_1014
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_long_press_e_5_1014
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
   action:
     - service: logbook.log
       data:
         name: 无线开关长按事件
-        message: "Payload明细: {{ trigger.event.data | to_json }}"
+        message: "Payload明细: {{ trigger.to_state.attributes | to_json }}"
         entity_id: automation.light_living_long_press_log
 
