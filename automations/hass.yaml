@@ -25,3 +25,48 @@
         keep_days: 3
         entity_globs: sensor.mercury_smb* sensor.linp_cn_*_body_distance_*
   mode: single
+
+- alias: HASS - 清理数据库
+  id: hass_purge_database
+  description: 定期清理数据库，保持数据库大小合理
+  triggers:
+    - trigger: time
+      at: "03:00:00"
+  conditions: []
+  actions:
+    - action: recorder.purge
+      data:
+        keep_days: 30
+        repack: true
+  mode: single
+
+- alias: HASS - 备份配置
+  id: hass_backup_config
+  description: 每7天创建一次配置备份（每周一执行）
+  triggers:
+    - trigger: time
+      at: "02:00:00"
+  conditions:
+    - condition: template
+      value_template: "{{ now().weekday() == 0 }}"
+  actions:
+    - action: hassio.backup_full
+      data:
+        name: "自动备份_{{ now().strftime('%Y%m%d_%H%M%S') }}"
+        password: ""
+        compressed: true
+  mode: single
+
+- alias: HASS - 清理旧备份
+  id: hass_cleanup_backups
+  description: 删除超过30天的旧备份，只保留最近5个
+  triggers:
+    - trigger: time
+      at: "02:30:00"
+  conditions: []
+  actions:
+    - action: python_script.cleanup_backups
+      data:
+        keep_days: 30
+        keep_count: 4
+  mode: single
