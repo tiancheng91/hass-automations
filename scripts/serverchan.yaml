@@ -1,0 +1,66 @@
+# ============================================
+# Server酱推送消息脚本
+# ============================================
+# 
+# 在 automation 中调用此脚本的方式：
+#
+# 方式一：在 actions 中直接调用
+#   actions:
+#     - service: script.serverchan_push
+#       data:
+#         title: "消息标题"
+#         content: "消息内容"
+#
+# 方式二：作为单个 action 调用
+#   actions:
+#     - service: script.serverchan_push
+#       data_template:
+#         title: "{{ '动态标题' }}"
+#         content: "{{ '动态内容：' + states('sensor.temperature') }}"
+#
+# 方式三：在条件满足时调用
+#   actions:
+#     - condition: state
+#       entity_id: sensor.temperature
+#       above: 30
+#     - service: script.serverchan_push
+#       data:
+#         title: "高温提醒"
+#         content: "当前温度过高，请注意！"
+#
+# 方式四：在多个 action 中调用（与其他操作组合）
+#   actions:
+#     - service: light.turn_on
+#       entity_id: light.example
+#     - service: script.serverchan_push
+#       data:
+#         title: "灯光已开启"
+#         content: "客厅灯光已自动开启"
+#
+# 参数说明：
+#   - title: 消息标题（必填）
+#   - content: 消息内容（必填）
+#
+# 注意事项：
+#   - sendKey 已写死在脚本中，无需额外配置
+#   - 可以在 data 中使用模板语法 {{ }} 来动态生成内容
+#   - 支持在 automation 的 actions 中多次调用
+#
+# ============================================
+
+serverchan_push:
+  alias: Server酱推送消息
+  description: 使用Server酱推送消息，支持传入title和content参数
+  fields:
+    title:
+      description: 消息标题
+      example: "Home Assistant 通知"
+    content:
+      description: 消息内容
+      example: "这是一条测试消息"
+  sequence:
+    - service: rest_command.serverchan_notify
+      data:
+        title: "{{ title }}"
+        content: "{{ content }}"
+

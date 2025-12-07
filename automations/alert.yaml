@@ -1,4 +1,5 @@
 - alias: 助手 - 出门天气提醒
+  id: alert_weather_rainy_reminder
   description: ""
   mode: single
   triggers:
@@ -12,3 +13,58 @@
     - data:
         text: 🌧️今日有雨,出门请带伞
       action: shell_command.send_msg
+
+- alias: 助手 - 天气提醒（雨雪）
+  id: alert_weather_rainy_snowy_reminder
+  description: 每天早上8点检查天气，如有雨或雪则推送提醒
+  mode: single
+  trigger:
+    - platform: time
+      at: "08:00:00"
+  condition:
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: weather.home
+          state: rainy
+        - condition: state
+          entity_id: weather.home
+          state: snowy
+  action:
+    - service: script.serverchan_push
+      data:
+        title: >
+          {% set weather_state = states('weather.home') %}
+          {% if weather_state == 'rainy' %}
+            下雨提醒
+          {% elif weather_state == 'snowy' %}
+            下雪提醒
+          {% else %}
+            天气提醒
+          {% endif %}
+        content: >
+          {% set weather_state = states('weather.home') %}
+          {% set weather_condition = state_attr('weather.home', 'condition') | default('未知') %}
+          {% set temperature = state_attr('weather.home', 'temperature') | default('未知') %}
+          {% set humidity = state_attr('weather.home', 'humidity') | default('未知') %}
+          {% set forecast = state_attr('weather.home', 'forecast') | default([]) %}
+          
+          📅 当日天气明细：
+          • 天气状况：{{ weather_condition }}
+          • 当前温度：{{ temperature }}°C
+          • 湿度：{{ humidity }}%
+          
+          {% if forecast and forecast | length > 0 %}
+          • 今日预报：{{ forecast[0].condition | default('未知') }}
+          {% endif %}
+          
+          ⚠️ 注意事项：
+          {% if weather_state == 'rainy' %}
+          • 🌧️ 今日有雨，出门请带伞
+          • 注意路面湿滑，小心驾驶
+          • 建议穿着防雨衣物
+          {% elif weather_state == 'snowy' %}
+          • ❄️ 今日有雪，注意保暖
+          • 路面可能结冰，出行注意安全
+          • 建议穿着防滑鞋
+          {% endif %}

@@ -1,0 +1,6 @@
+serverchan_notify:
+  url: 'https://sctapi.ftqq.com/SCT305003TEVTD4luU5FipEQKK241vm1Sy.send'
+  method: 'post'
+  content_type: 'application/json'
+  payload: '{"title":"{{ title }}","desp":"{{ content }}"}'
+
