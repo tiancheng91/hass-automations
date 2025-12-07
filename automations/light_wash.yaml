@@ -1,0 +1,107 @@
+# 卫生间灯光自动化配置
+# 领普人体传感器2 - 移动检测自动控制灯光
+# ========== 检测到移动 - 调高亮度 ==========
+- alias: 卫生间 - 检测到移动调高亮度
+  id: light_wash_motion_detected
+  mode: single
+  description: 检测到移动时，根据时间段调高灯光亮度（渐进调整）
+  trigger:
+    - platform: event
+      event_type: event.linp_cn_blt_3_1glkll4soco00_hs1bb1_motion_detected_e_2_1008
+  action:
+    - variables:
+        # 获取当前时间（小时）
+        current_hour: "{{ now().hour }}"
+        # 根据时间段计算最高亮度百分比
+        max_brightness_pct: >
+          {% if current_hour >= 1 and current_hour < 8 %}
+            {# 夜间01-08点，最高亮度40% #}
+            40
+          {% elif current_hour >= 8 and current_hour < 17 %}
+            {# 白天08-17点，最高亮度40% #}
+            40
+          {% else %}
+            {# 白天17-01点，最高亮度65% #}
+            65
+          {% endif %}
+    - service: light.turn_on
+      target:
+        entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+      data:
+        brightness_pct: "{{ max_brightness_pct }}"
+        transition: 3
+        # 保持当前色温
+        color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
+
+# ========== 无移动300秒 - 调低到10% ==========
+- alias: 卫生间 - 无移动300秒调低亮度
+  id: light_wash_no_motion_300s
+  mode: single
+  description: 无移动300秒后，调低灯光亮度到10%（渐进调整）
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      above: 299
+  condition:
+    # 确保灯光当前是开启状态
+    - condition: state
+      entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+      state: 'on'
+    # 确保无移动时间在300-600秒之间（避免600秒时重复触发）
+    - condition: template
+      value_template: "{{ states('sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024') | float < 600 }}"
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+      data:
+        brightness_pct: 15
+        transition: 3
+        # 保持当前色温
+        color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
+
+# ========== 无移动600秒 - 关闭或降低亮度 ==========
+- alias: 卫生间 - 无移动600秒关闭或降低亮度
+  id: light_wash_no_motion_600s
+  mode: single
+  description: 无移动600秒后，白天08-17点关闭灯光，其它时间降低到5%亮度（渐进调整）
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      above: 599
+  condition:
+    # 确保灯光当前是开启状态
+    - condition: state
+      entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+      state: 'on'
+  action:
+    - variables:
+        # 获取当前时间（小时）
+        current_hour: "{{ now().hour }}"
+        # 判断是否为白天08-17点
+        is_daytime: "{{ current_hour >= 8 and current_hour < 17 }}"
+    - choose:
+        # 白天08-17点：关闭灯光
+        - conditions:
+            - condition: template
+              value_template: "{{ is_daytime }}"
+          sequence:
+            - service: light.turn_off
+              target:
+                entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+              data:
+                transition: 3
+        # 其它时间：降低到5%亮度
+        - conditions:
+            - condition: template
+              value_template: "{{ not is_daytime }}"
+          sequence:
+            - service: light.turn_on
+              target:
+                entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
+              data:
+                brightness_pct: 5
+                transition: 3
+                # 保持当前色温
+                color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
+
