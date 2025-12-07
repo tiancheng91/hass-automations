@@ -12,3 +12,16 @@
         mode: light
         name: Metro Red
       action: frontend.set_theme
+
+- alias: HASS - 清理日志
+  id: hass_purge_log
+  triggers:
+    - trigger: time
+      at: "04:00:00"
+  conditions: []
+  actions:
+    - action: recorder.purge_entities
+      data:
+        keep_days: 3
+        entity_globs: sensor.mercury_smb* sensor.linp_cn_*_body_distance_*
+  mode: single
