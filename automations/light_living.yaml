@@ -1,0 +1,86 @@
+# 客厅灯光自动化配置
+# 领普无线开关KS1Pro - 单击切换设备开关状态
+# ========== 按键映射 ==========
+# 按键1 -> switch.lumi_cn_551288517_acn032_on_p_2_1 (Aqara 妙控开关 S1E 主灯 左键)
+# 按键2 -> switch.lumi_cn_551288517_acn032_on_p_3_1 (Aqara 妙控开关 S1E 筒灯 中键)
+# 按键3 -> switch.lumi_cn_551288517_acn032_on_p_4_1 (Aqara 妙控开关 S1E 灯带 右键)
+# 按键4 -> light.hyd_cn_672580633_pro2_s_3_light (米家智能晾衣机Pro 灯)
+
+- alias: 客厅 - 无线开关切换设备状态
+  id: light_living_switch_toggle
+  mode: single
+  description: 单击无线开关按键，反转对应设备的开关状态
+  trigger:
+    - platform: event
+      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_click_e_5_1012
+      event_data:
+        event_type: 单击
+  action:
+    - variables:
+        # 尝试多种可能的键名，支持数字和字符串类型
+        button_type: "{{ trigger.event.data.get('按键类型', trigger.event.data.get('button_type', trigger.event.data.get('key', ''))) | string }}"
+        button_num: "{{ button_type | int(0) }}"
+    - choose:
+        # 按键1 - 主灯 左键
+        - conditions:
+            - condition: template
+              value_template: "{{ button_type == '1' or button_num == 1 }}"
+          sequence:
+            - service: switch.toggle
+              target:
+                entity_id: switch.lumi_cn_551288517_acn032_on_p_2_1
+        # 按键2 - 筒灯 中键
+        - conditions:
+            - condition: template
+              value_template: "{{ button_type == '2' or button_num == 2 }}"
+          sequence:
+            - service: switch.toggle
+              target:
+                entity_id: switch.lumi_cn_551288517_acn032_on_p_3_1
+        # 按键3 - 灯带 右键
+        - conditions:
+            - condition: template
+              value_template: "{{ button_type == '3' or button_num == 3 }}"
+          sequence:
+            - service: switch.toggle
+              target:
+                entity_id: switch.lumi_cn_551288517_acn032_on_p_4_1
+        # 按键4 - 米家智能晾衣机Pro 灯
+        - conditions:
+            - condition: template
+              value_template: "{{ button_type == '4' or button_num == 4 }}"
+          sequence:
+            - service: light.toggle
+              target:
+                entity_id: light.hyd_cn_672580633_pro2_s_3_light
+
+# ========== 双击事件 - 日志记录 ==========
+- alias: 客厅 - 无线开关双击事件日志
+  id: light_living_double_click_log
+  mode: single
+  description: 记录无线开关双击事件的 payload 明细到 logbook
+  trigger:
+    - platform: event
+      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+  action:
+    - service: logbook.log
+      data:
+        name: 无线开关双击事件
+        message: "Payload明细: {{ trigger.event.data | to_json }}"
+        entity_id: automation.light_living_double_click_log
+
+# ========== 长按事件 - 日志记录 ==========
+- alias: 客厅 - 无线开关长按事件日志
+  id: light_living_long_press_log
+  mode: single
+  description: 记录无线开关长按事件的 payload 明细到 logbook
+  trigger:
+    - platform: event
+      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_long_press_e_5_1014
+  action:
+    - service: logbook.log
+      data:
+        name: 无线开关长按事件
+        message: "Payload明细: {{ trigger.event.data | to_json }}"
+        entity_id: automation.light_living_long_press_log
+
