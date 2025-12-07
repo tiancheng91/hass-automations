@@ -69,6 +69,44 @@
         message: "Payload明细: {{ trigger.event.data | to_json }}"
         entity_id: automation.light_living_double_click_log
 
+# ========== 双击事件 - 按键1切换灯1模式 ==========
+- alias: 客厅 - 按键1双击切换灯1模式
+  id: light_living_button1_double_click_mode
+  mode: single
+  description: 按键1双击时，切换灯1亮度模式（月光、休闲、会客循环）
+  trigger:
+    - platform: event
+      event_type: event.linp_cn_blt_3_1ie02q6jocg00_ks1bp_double_click_e_5_1013
+  condition:
+    - condition: template
+      value_template: >
+        {% set button_type = trigger.event.data.get('按键类型', trigger.event.data.get('button_type', trigger.event.data.get('key', ''))) | string %}
+        {% set button_num = button_type | int(0) %}
+        {{ button_type == '1' or button_num == 1 }}
+  action:
+    - variables:
+        # 获取当前灯1的effect状态
+        current_effect: "{{ state_attr('light.ftd_cn_1087033247_ftdlmp_s_2_light', 'effect') }}"
+        # 计算下一个模式（月光、休闲、会客循环）
+        next_mode: >
+          {% set modes = ["月光（夜间）模式", "休闲模式", "会客模式"] %}
+          {% set current = current_effect %}
+          {% set current_idx = 0 %}
+          {% if current == "月光（夜间）模式" %}
+            {% set current_idx = 0 %}
+          {% elif current == "休闲模式" %}
+            {% set current_idx = 1 %}
+          {% elif current == "会客模式" %}
+            {% set current_idx = 2 %}
+          {% endif %}
+          {% set next_idx = (current_idx + 1) % 3 %}
+          {{ modes[next_idx] }}
+    - service: light.turn_on
+      target:
+        entity_id: light.ftd_cn_1087033247_ftdlmp_s_2_light
+      data:
+        effect: "{{ next_mode }}"
+
 # ========== 长按事件 - 日志记录 ==========
 - alias: 客厅 - 无线开关长按事件日志
   id: light_living_long_press_log
