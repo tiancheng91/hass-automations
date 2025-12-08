@@ -50,7 +50,7 @@
     - condition: template
       value_template: "{{ now().weekday() == 0 }}"
   actions:
-    - action: hassio.backup_full
+    - service: backup.create
       data:
         name: "自动备份_{{ now().strftime('%Y%m%d_%H%M%S') }}"
         password: ""

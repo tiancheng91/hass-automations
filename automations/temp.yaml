@@ -1,4 +1,4 @@
-- alias: 夜间主卧-温度高-开空调
+- alias: 主卧 - 温度高_开空调
   id: bedroom_climate_on
   initial_state: true
   trigger:
@@ -22,7 +22,7 @@
     - service: climate.turn_on
       entity_id: climate.090615_cn_proxy_681594875_00003_ktf
 
-- alias: 夜间主卧-温度低-关空调
+- alias: 主卧 - 温度低_关空调
   id: bedroom_climate_off
   initial_state: true
   trace:
@@ -54,7 +54,7 @@
     - service: climate.turn_off
       entity_id: climate.090615_cn_proxy_681594875_00003_ktf
 
-- alias: 主卧-关闭设备
+- alias: 主卧 - 关闭设备
   id: bedroom_turn_off_all
   initial_state: true
   trigger:
@@ -70,7 +70,7 @@
     - service: fan.turn_off
       entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan  # 关闭风扇
 
-- alias: 主卧-开启设备
+- alias: 主卧 - 开启设备
   id: bedroom_turn_on
   initial_state: true
   trigger:
