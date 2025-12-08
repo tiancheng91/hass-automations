@@ -12,7 +12,7 @@
   condition:
     # 无移动时间小于300秒，说明刚回家（即使home_state更新有延迟也能触发）
     - condition: template
-      value_template: "{{ states('sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024') | float < 300 }}"
+      value_template: "{{ states('sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024') | float < 300 }}"
   action:
     # 开启氛围灯
     - service: switch.turn_on
@@ -83,7 +83,7 @@
   description: 无移动5分钟后，关闭筒灯
   trigger:
     - platform: state
-      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
   condition:
     # 确保筒灯当前是开启状态
@@ -102,7 +102,7 @@
   description: 无移动10分钟后，关闭氛围灯
   trigger:
     - platform: state
-      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "600"
   condition:
     # 确保氛围灯当前是开启状态
