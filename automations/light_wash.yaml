@@ -48,17 +48,14 @@
   mode: single
   description: 无移动300秒后，调低灯光亮度到10%（渐进调整）
   trigger:
-    - platform: numeric_state
+    - platform: state
       entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
-      above: 299
+      to: "300"
   condition:
     # 确保灯光当前是开启状态
     - condition: state
       entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
       state: 'on'
-    # 确保无移动时间在300-600秒之间（避免600秒时重复触发）
-    - condition: template
-      value_template: "{{ states('sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024') | float < 600 }}"
   action:
     - service: light.turn_on
       target:
@@ -73,9 +70,9 @@
   mode: single
   description: 无移动600秒后，白天08-17点关闭灯光，其它时间降低到5%亮度（渐进调整）
   trigger:
-    - platform: numeric_state
+    - platform: state
       entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
-      above: 599
+      to: "600"
   condition:
     # 确保灯光当前是开启状态
     - condition: state
