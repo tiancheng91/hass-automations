@@ -36,8 +36,6 @@
       data:
         brightness_pct: "{{ max_brightness_pct }}"
         transition: 3
-        # 保持当前色温
-        color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
 
 # ========== 无移动300秒 - 调低到10% ==========
 - alias: 卫生间 - 无移动300秒调低亮度
@@ -63,8 +61,6 @@
       data:
         brightness_pct: 15
         transition: 3
-        # 保持当前色温
-        color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
 
 # ========== 无移动600秒 - 关闭或降低亮度 ==========
 - alias: 卫生间 - 无移动600秒关闭或降低亮度
@@ -108,6 +104,4 @@
               data:
                 brightness_pct: 5
                 transition: 3
-                # 保持当前色温
-                color_temp_kelvin: "{{ state_attr('light.mijia_cn_group_1755950629190250500_group3_s_2_light', 'color_temp_kelvin') | default(4355) }}"
 
