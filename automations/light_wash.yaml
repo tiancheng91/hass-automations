@@ -14,6 +14,11 @@
       not_to:
         - "unavailable"
         - "unknown"
+  condition:
+    # 只在有人在家时触发
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
   action:
     - variables:
         # 获取当前时间（小时）

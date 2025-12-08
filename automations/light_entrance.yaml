@@ -1,0 +1,117 @@
+# 玄关灯光自动化配置
+# ========== 回家模式 - 开灯 ==========
+- alias: 玄关 - 回家模式开灯
+  id: light_entrance_home_mode
+  mode: single
+  description: 回家模式（home_state从off变为on）时，如果无移动时间小于300秒，开启筒灯和氛围灯；18-24点之间延迟5秒打开客厅灯带
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "off"
+      to: "on"
+  condition:
+    # 无移动时间小于300秒，说明刚回家（即使home_state更新有延迟也能触发）
+    - condition: template
+      value_template: "{{ states('sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024') | float < 300 }}"
+  action:
+    # 开启氛围灯
+    - service: switch.turn_on
+      target:
+        entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
+    # 开启筒灯（等待设备可用后延迟1秒开启）
+    - wait_template: "{{ states('switch.linp_cn_1080373159_q3s2_on_p_3_1') not in ['unavailable', 'unknown'] }}"
+      timeout: "00:00:10"
+    - delay:
+        seconds: 1
+    - service: switch.turn_on
+      target:
+        entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+    # 如果当前时间在18-24点之间，延迟5秒后打开客厅灯带
+    - choose:
+        - conditions:
+            - condition: time
+              after: "18:00:00"
+              before: "24:00:00"
+          sequence:
+            # 延迟5秒
+            - delay:
+                seconds: 1
+            # 等待设备可用（设备启动有延迟）
+            - wait_template: "{{ states('switch.lumi_cn_551288517_acn032_on_p_4_1') not in ['unavailable', 'unknown'] }}"
+              timeout: "00:00:30"
+            # 设备可用后，再延迟3秒开灯
+            - delay:
+                seconds: 3
+            # 打开客厅灯带
+            - service: switch.turn_on
+              target:
+                entity_id: switch.lumi_cn_551288517_acn032_on_p_4_1
+
+# 领普人体传感器3 - 移动检测自动控制灯光
+# ========== 检测到移动 - 开灯（常规模式）==========
+- alias: 玄关 - 检测到移动开灯
+  id: light_entrance_motion_detected
+  mode: single
+  description: 检测到移动时，且有人在家时，开启筒灯和氛围灯
+  trigger:
+    - platform: state
+      entity_id: event.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_motion_detected_e_2_1008
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
+  condition:
+    # 只在有人在家时触发
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
+  action:
+    # 开启筒灯
+    - service: switch.turn_on
+      target:
+        entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+    # 开启氛围灯
+    - service: switch.turn_on
+      target:
+        entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
+
+# ========== 无移动5分钟 - 关筒灯 ==========
+- alias: 玄关 - 无移动5分钟关筒灯
+  id: light_entrance_no_motion_5min
+  mode: single
+  description: 无移动5分钟后，关闭筒灯
+  trigger:
+    - platform: state
+      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      to: "300"
+  condition:
+    # 确保筒灯当前是开启状态
+    - condition: state
+      entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+
+# ========== 无移动10分钟 - 关氛围灯 ==========
+- alias: 玄关 - 无移动10分钟关氛围灯
+  id: light_entrance_no_motion_10min
+  mode: single
+  description: 无移动10分钟后，关闭氛围灯
+  trigger:
+    - platform: state
+      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      to: "600"
+  condition:
+    # 确保氛围灯当前是开启状态
+    - condition: state
+      entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
+
