@@ -26,10 +26,10 @@
         # 根据时间段计算最高亮度百分比
         max_brightness_pct: >
           {% if current_hour >= 1 and current_hour < 8 %}
-            {# 夜间01-08点，最高亮度40% #}
+            {# 夜间01-08点，最高亮度30% #}
             40
           {% elif current_hour >= 8 and current_hour < 17 %}
-            {# 白天08-17点，最高亮度40% #}
+            {# 白天08-17点，最高亮度45% #}
             40
           {% else %}
             {# 白天17-01点，最高亮度65% #}
