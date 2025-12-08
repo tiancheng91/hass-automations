@@ -29,9 +29,8 @@
     # 如果当前时间在18-24点之间，延迟5秒后打开客厅灯带
     - choose:
         - conditions:
-            - condition: time
-              after: "18:00:00"
-              before: "24:00:00"
+            - condition: template
+              value_template: "{{ now().hour >= 18 }}"
           sequence:
             # 延迟5秒
             - delay:
