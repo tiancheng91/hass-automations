@@ -2,19 +2,14 @@
 # ========== 玄关无人移动超过30分钟且厨房灯开启超过25分钟 - 关闭厨房灯 ==========
 - alias: 厨房 - 玄关无人30分钟且灯开启25分钟关灯
   id: light_kitchen_auto_off
-  mode: single
+  mode: restart
   description: 玄关无人移动超过30分钟（传感器维持在300超过1500秒），且厨房灯开启超过25分钟，关闭厨房灯
   trigger:
     - platform: state
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
+      for: "00:30:00"
   condition:
-    # 确保传感器值维持在300状态满1500秒（25分钟）
-    - condition: state
-      entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
-      state: "300"
-      for:
-        seconds: 1500
     # 确保厨房灯当前是开启状态
     - condition: state
       entity_id: switch.giot_cn_1088662238_v6oodm_on_p_2_1
