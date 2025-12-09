@@ -25,14 +25,14 @@
         current_hour: "{{ now().hour }}"
         # 根据时间段计算最高亮度百分比
         max_brightness_pct: >
-          {% if current_hour >= 1 and current_hour < 8 %}
-            {# 夜间01-08点，最高亮度30% #}
+          {% if current_hour >= 0 and current_hour < 8 %}
+            {# 夜间00-08点，最高亮度25% #}
             40
-          {% elif current_hour >= 8 and current_hour < 17 %}
+          {% elif current_hour >= 8 and current_hour < 18 %}
             {# 白天08-17点，最高亮度45% #}
             40
           {% else %}
-            {# 白天17-01点，最高亮度65% #}
+            {# 夜间18-24点，最高亮度60% #}
             65
           {% endif %}
     - service: light.turn_on
@@ -72,8 +72,14 @@
   trigger:
     - platform: state
       entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
-      to: "600"
+      to: "300"
   condition:
+    # 确保传感器值维持在300状态满300秒
+    - condition: state
+      entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
+      state: "300"
+      for:
+        seconds: 300
     # 确保灯光当前是开启状态
     - condition: state
       entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
