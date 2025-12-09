@@ -121,12 +121,18 @@
 - alias: 玄关 - 无移动10分钟关氛围灯
   id: light_entrance_no_motion_10min
   mode: single
-  description: 无移动10分钟后，关闭氛围灯
+  description: 无移动10分钟后（传感器维持在300超过300秒），关闭氛围灯
   trigger:
     - platform: state
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
-      to: "600"
+      to: "300"
   condition:
+    # 确保传感器值维持在300状态满300秒（总共600秒=10分钟）
+    - condition: state
+      entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
+      state: "300"
+      for:
+        seconds: 300
     # 确保氛围灯当前是开启状态
     - condition: state
       entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
