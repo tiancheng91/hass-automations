@@ -1,16 +1,17 @@
 # 离家/回家模式 - 自动化集中管理
+# 使用优化后的 home_state 传感器（结合 door_state 和原始传感器状态）
 # ========== 离家时 - 关闭灯光相关自动化 ==========
 - alias: 离家模式 - 关闭灯光自动化
   id: home_state_away_disable_automations
   mode: single
-  description: 检测到离家状态时，批量关闭所有需要在家才能运行的灯光自动化
+  description: 检测到离家状态时（home_state从on变为off持续5分钟），批量关闭所有需要在家才能运行的灯光自动化
   trigger:
     - platform: state
       entity_id: binary_sensor.home_state
       from: "on"
       to: "off"
       for:
-        minutes: 5  # 确认离家5分钟后执行
+        minutes: 5  # 确认离家5分钟后执行（避免误判）
   action:
     # 关闭所有需要在家才能运行的灯光自动化
     - service: automation.turn_off
@@ -34,14 +35,14 @@
 - alias: 回家模式 - 开启灯光自动化
   id: home_state_home_enable_automations
   mode: single
-  description: 检测到回家状态时，批量开启所有灯光自动化
+  description: 检测到回家状态时（home_state从off变为on持续1分钟），批量开启所有灯光自动化
   trigger:
     - platform: state
       entity_id: binary_sensor.home_state
       from: "off"
       to: "on"
       for:
-        minutes: 1  # 确认回家1分钟后执行
+        minutes: 1  # 确认回家1分钟后执行（确保状态稳定）
   action:
     # 开启所有灯光自动化
     - service: automation.turn_on

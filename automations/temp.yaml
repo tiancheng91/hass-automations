@@ -9,6 +9,7 @@
       for:
         minutes: 5  # 温度持续高于30度2分钟后触发
   condition:
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"

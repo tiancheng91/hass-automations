@@ -15,7 +15,7 @@
         - "unavailable"
         - "unknown"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"
@@ -58,7 +58,7 @@
       entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
       to: "300"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"
@@ -84,7 +84,7 @@
       entity_id: sensor.linp_cn_blt_3_1glkll4soco00_hs1bb1_no_motion_duration_p_2_1024
       to: "600"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"

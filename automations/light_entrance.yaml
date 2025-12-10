@@ -3,38 +3,18 @@
 - alias: 玄关 - 回家模式开灯
   id: light_entrance_home_mode
   mode: single
-  description: 检测到"开门"事件且home_state为off时，开启筒灯和氛围灯；18-24点之间延迟5秒打开客厅灯带（优化：不等待home_state变为on，减少延迟）
+  description: 检测到home_state从off变为on时（回家），开启筒灯和氛围灯；18-24点之间延迟打开客厅灯带
   trigger:
     - platform: state
-      entity_id: event.xiaomi_cn_1079257233_hub1_virtual_event_e_4_1
-      not_from:
-        - "unavailable"
-        - "unknown"
-      not_to:
-        - "unavailable"
-        - "unknown"
-  condition:
-    # 事件名称为"开门"
-    - condition: template
-      value_template: "{{ trigger.to_state.attributes.get('事件名称', '') == '开门' }}"
-    # home_state为off，表示不在家状态（刚回家）
-    - condition: state
       entity_id: binary_sensor.home_state
-      state: "off"
-    # home_state为off超过30秒，确保确实是从不在家状态回家
-    # 添加安全检查，防止实体不存在或状态异常时出错
+      from: "off"
+      to: "on"
+      for:
+        seconds: 5  # 确保状态稳定，避免误触发
+  condition:
+    # 确保home_state实体可用（安全检查）
     - condition: template
-      value_template: >
-        {% if states('binary_sensor.home_state') not in ['unknown', 'unavailable', None] %}
-          {% set home_state = states.binary_sensor.home_state %}
-          {% if home_state.last_changed is defined %}
-            {{ (now() - home_state.last_changed).total_seconds() >= 30 }}
-          {% else %}
-            False
-          {% endif %}
-        {% else %}
-          False
-        {% endif %}
+      value_template: "{{ states('binary_sensor.home_state') not in ['unknown', 'unavailable', None] }}"
   action:
     # 开启氛围灯
     - service: switch.turn_on
@@ -84,7 +64,7 @@
         - "unavailable"
         - "unknown"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"
@@ -108,7 +88,7 @@
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"

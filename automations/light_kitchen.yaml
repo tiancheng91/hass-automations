@@ -10,7 +10,7 @@
       to: "300"
       for: "00:30:00"
   condition:
-    # 只在有人在家时触发
+    # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"
