@@ -2,7 +2,7 @@
 # 结合开门/关门事件和原始传感器状态，提升响应速度
 # 
 # 在 configuration.yaml 中添加：
-# binary_sensor: !include_dir_merge_named sensors/
+# binary_sensor: !include_dir_merge_list sensors/
 
 - platform: template
   sensors:
