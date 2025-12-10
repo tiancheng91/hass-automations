@@ -11,10 +11,6 @@
       to: "on"
       for:
         seconds: 1  # 确保状态稳定，避免误触发
-  condition:
-    # 确保home_state实体可用（安全检查）
-    - condition: template
-      value_template: "{{ states('binary_sensor.home_state') not in ['unknown', 'unavailable', None] }}"
   action:
     # 开启氛围灯
     - service: switch.turn_on
@@ -24,7 +20,7 @@
     - wait_template: "{{ states('switch.linp_cn_1080373159_q3s2_on_p_3_1') not in ['unavailable', 'unknown'] }}"
       timeout: "00:00:10"
     - delay:
-        seconds: 3
+        seconds: 2
     - service: switch.turn_on
       target:
         entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
@@ -34,9 +30,6 @@
             - condition: template
               value_template: "{{ now().hour >= 18 }}"
           sequence:
-            # 延迟5秒
-            - delay:
-                seconds: 1
             # 等待设备可用（设备启动有延迟）
             - wait_template: "{{ states('switch.lumi_cn_551288517_acn032_on_p_4_1') not in ['unavailable', 'unknown'] }}"
               timeout: "00:00:30"
