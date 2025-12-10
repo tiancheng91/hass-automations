@@ -1,0 +1,63 @@
+# 离家/回家模式 - 自动化集中管理
+# ========== 离家时 - 关闭灯光相关自动化 ==========
+- alias: 离家模式 - 关闭灯光自动化
+  id: home_state_away_disable_automations
+  mode: single
+  description: 检测到离家状态时，批量关闭所有需要在家才能运行的灯光自动化
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "on"
+      to: "off"
+      for:
+        minutes: 5  # 确认离家5分钟后执行
+  action:
+    # 关闭所有需要在家才能运行的灯光自动化
+    - service: automation.turn_off
+      target:
+        entity_id:
+          # 玄关灯光自动化
+          - automation.light_entrance_motion_detected  # 检测到移动开灯
+          - automation.light_entrance_no_motion_5min   # 无移动5分钟关筒灯
+          # 厨房灯光自动化
+          - automation.light_kitchen_auto_off          # 厨房自动关灯
+          # 卫生间灯光自动化
+          - automation.light_wash_motion_detected      # 检测到移动调高亮度
+          - automation.light_wash_no_motion_300s      # 无移动300秒调低亮度
+          - automation.light_wash_no_motion_600s      # 无移动600秒关闭或降低亮度
+    - service: logbook.log
+      data:
+        name: 离家模式
+        message: "已关闭所有灯光自动化"
+
+# ========== 回家时 - 开启灯光相关自动化 ==========
+- alias: 回家模式 - 开启灯光自动化
+  id: home_state_home_enable_automations
+  mode: single
+  description: 检测到回家状态时，批量开启所有灯光自动化
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "off"
+      to: "on"
+      for:
+        minutes: 1  # 确认回家1分钟后执行
+  action:
+    # 开启所有灯光自动化
+    - service: automation.turn_on
+      target:
+        entity_id:
+          # 玄关灯光自动化
+          - automation.light_entrance_motion_detected  # 检测到移动开灯
+          - automation.light_entrance_no_motion_5min   # 无移动5分钟关筒灯
+          # 厨房灯光自动化
+          - automation.light_kitchen_auto_off          # 厨房自动关灯
+          # 卫生间灯光自动化
+          - automation.light_wash_motion_detected      # 检测到移动调高亮度
+          - automation.light_wash_no_motion_300s      # 无移动300秒调低亮度
+          - automation.light_wash_no_motion_600s      # 无移动600秒关闭或降低亮度
+    - service: logbook.log
+      data:
+        name: 回家模式
+        message: "已开启所有灯光自动化"
+

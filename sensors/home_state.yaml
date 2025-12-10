@@ -1,0 +1,108 @@
+# 优化后的在家状态传感器配置
+# 结合开门/关门事件和原始传感器状态，提升响应速度
+# 
+# 在 configuration.yaml 中添加：
+# binary_sensor: !include_dir_merge_named sensors/
+
+- platform: template
+  sensors:
+    # 门状态传感器 - 基于开门/关门事件
+    door_state:
+      friendly_name: "门状态"
+      device_class: door
+      # 基于事件中的"开门"和"关门"来更新门状态
+      # 开门 -> on (门开), 关门 -> off (门关)
+      value_template: >
+        {% set door_event = 'event.xiaomi_cn_1079257233_hub1_virtual_event_e_4_1' %}
+        {% set door_event_obj = states[door_event] %}
+        
+        {% if door_event_obj is defined %}
+          {% set door_event_attrs = door_event_obj.attributes %}
+          {% set last_event_name = door_event_attrs.get('事件名称', '') if door_event_attrs else '' %}
+          {% set last_event_time = door_event_obj.last_changed if door_event_obj.last_changed is defined else None %}
+        {% else %}
+          {% set last_event_name = '' %}
+          {% set last_event_time = None %}
+        {% endif %}
+        
+        {# 计算距离最后一次事件的时间（秒） #}
+        {% if last_event_time %}
+          {% set seconds_since_event = (now() - last_event_time).total_seconds() %}
+        {% else %}
+          {% set seconds_since_event = 999999 %}
+        {% endif %}
+        
+        {# 判断逻辑：最近60秒内的开门/关门事件决定门状态 #}
+        {% if last_event_name == '开门' and seconds_since_event <= 60 %}
+          {# 最近60秒内有开门事件：门开 #}
+          True
+        {% elif last_event_name == '关门' and seconds_since_event <= 60 %}
+          {# 最近60秒内有关门事件：门关 #}
+          False
+        {% else %}
+          {# 没有最近的开门/关门事件，默认认为门关 #}
+          False
+        {% endif %}
+      
+      icon_template: >
+        {% if is_state('binary_sensor.door_state', 'on') %}
+          mdi:door-open
+        {% else %}
+          mdi:door-closed
+        {% endif %}
+    
+    # 在家状态传感器
+    home_state:
+      friendly_name: "在家状态"
+      device_class: presence
+      # 优化逻辑：
+      # 1. 门开状态（door_state为on）：立即认为在家（on），解决回家延迟15秒的问题
+      # 2. 门关状态（door_state为off，且超过5秒）：使用原始传感器状态判断
+      # 3. 门关状态（door_state为off，但少于5秒）：仍然认为在家，给原始传感器时间响应
+      # 4. 门状态未知：使用原始传感器状态
+      value_template: >
+        {% set base_sensor = 'sensor.hyd_cn_672580633_pro2_fault_p_2_1' %}
+        {% set door_state_entity = 'binary_sensor.door_state' %}
+        
+        {# 获取原始传感器状态 #}
+        {% set base_state = states(base_sensor) %}
+        {% set base_available = base_state not in ['unavailable', 'unknown', None] %}
+        
+        {# 获取门状态 #}
+        {% set door_state = states(door_state_entity) %}
+        {% set door_is_open = door_state == 'on' %}
+        
+        {# 获取门状态最后变更时间 #}
+        {% set door_state_obj = states[door_state_entity] %}
+        {% if door_state_obj is defined and door_state_obj.last_changed is defined %}
+          {% set seconds_since_door_change = (now() - door_state_obj.last_changed).total_seconds() %}
+        {% else %}
+          {% set seconds_since_door_change = 999999 %}
+        {% endif %}
+        
+        {# 判断逻辑 #}
+        {% if door_is_open %}
+          {# 门开：立即认为在家（on），解决回家延迟问题 #}
+          True
+        {% elif door_state == 'off' %}
+          {# 门关 #}
+          {% if seconds_since_door_change < 5 %}
+            {# 关门后5秒内：仍然认为在家，给原始传感器时间响应 #}
+            True
+          {% else %}
+            {# 关门5秒后：使用原始传感器状态判断 #}
+            {{ base_available }}
+          {% endif %}
+        {% else %}
+          {# 门状态未知：使用原始传感器状态 #}
+          {{ base_available }}
+        {% endif %}
+      
+      # 设备类属性
+      icon_template: >
+        {% if is_state('binary_sensor.home_state', 'on') %}
+          mdi:home
+        {% else %}
+          mdi:home-outline
+        {% endif %}
+
