@@ -108,6 +108,10 @@
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
   condition:
+    # 只在有人在家时触发
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
     # 确保筒灯当前是开启状态
     - condition: state
       entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1

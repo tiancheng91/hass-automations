@@ -10,6 +10,10 @@
       to: "300"
       for: "00:30:00"
   condition:
+    # 只在有人在家时触发
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
     # 确保厨房灯当前是开启状态
     - condition: state
       entity_id: switch.giot_cn_1088662238_v6oodm_on_p_2_1
