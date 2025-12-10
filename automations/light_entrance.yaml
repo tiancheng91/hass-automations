@@ -71,15 +71,16 @@
       target:
         entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
 
-# ========== 无移动5分钟 - 关筒灯 ==========
-- alias: 玄关 - 无移动5分钟关筒灯
+# ========== 无移动15分钟 - 关筒灯 ==========
+- alias: 玄关 - 无移动15分钟关筒灯
   id: light_entrance_no_motion_5min
   mode: single
-  description: 无移动5分钟后，关闭筒灯
+  description: 无移动15分钟后，关闭筒灯
   trigger:
     - platform: state
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
+      for: "00:10:00"
   condition:
     # 只在有人在家时触发（使用优化后的home_state传感器）
     - condition: state
@@ -94,16 +95,16 @@
       target:
         entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
 
-# ========== 无移动10分钟 - 关氛围灯 ==========
-- alias: 玄关 - 无移动10分钟关氛围灯
+# ========== 无移动25分钟 - 关氛围灯 ==========
+- alias: 玄关 - 无移动25分钟关氛围灯
   id: light_entrance_no_motion_10min
   mode: restart
-  description: 无移动10分钟后（传感器维持在300超过300秒），关闭氛围灯
+  description: 无移动25分钟后（传感器维持在300超过300秒），关闭氛围灯
   trigger:
     - platform: state
       entity_id: sensor.linp_cn_blt_3_1kjgrp40ckg00_hs1bb2_no_motion_duration_p_2_1024
       to: "300"
-      for: "00:10:00"
+      for: "00:20:00"
   condition:
     # 确保氛围灯当前是开启状态
     - condition: state
