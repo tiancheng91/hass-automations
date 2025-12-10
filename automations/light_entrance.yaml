@@ -10,7 +10,7 @@
       from: "off"
       to: "on"
       for:
-        seconds: 5  # 确保状态稳定，避免误触发
+        seconds: 1  # 确保状态稳定，避免误触发
   condition:
     # 确保home_state实体可用（安全检查）
     - condition: template

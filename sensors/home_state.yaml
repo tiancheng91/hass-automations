@@ -86,8 +86,8 @@
           True
         {% elif door_state == 'off' %}
           {# 门关 #}
-          {% if seconds_since_door_change < 5 %}
-            {# 关门后5秒内：仍然认为在家，给原始传感器时间响应 #}
+          {% if seconds_since_door_change < 30 %}
+            {# 关门后30秒内：仍然认为在家，给原始传感器时间响应 #}
             True
           {% else %}
             {# 关门5秒后：使用原始传感器状态判断 #}
