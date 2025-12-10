@@ -42,7 +42,7 @@
       from: "off"
       to: "on"
       for:
-        minutes: 1  # 确认回家1分钟后执行（确保状态稳定）
+        seconds: 30  # 确认回家30s后执行（确保状态稳定）
   action:
     # 开启所有灯光自动化
     - service: automation.turn_on
