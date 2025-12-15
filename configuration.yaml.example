@@ -18,3 +18,9 @@
 # # 包含所有 binary_sensor 配置（包括优化后的 home_state 和 door_state）
 # binary_sensor: !include_dir_merge_list sensors/
 #
+# ============================================
+# 注意事项：
+# - secrets.yaml 文件用于存储敏感信息（如 API token）
+# - 请确保 secrets.yaml 文件已创建并配置了 serverchan_token
+# - 建议将 secrets.yaml 添加到 .gitignore 以避免泄露敏感信息
+#
