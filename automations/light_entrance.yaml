@@ -16,23 +16,26 @@
     - service: switch.turn_on
       target:
         entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
-    # 开启筒灯（等待设备可用后延迟1秒开启）
-    - wait_template: "{{ states('switch.linp_cn_1080373159_q3s2_on_p_3_1') not in ['unavailable', 'unknown'] }}"
-      timeout: "00:00:10"
-    - delay:
-        seconds: 2
-    - service: switch.turn_on
-      target:
-        entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
-    # 如果当前时间在18-24点之间，延迟5秒后打开客厅灯带
-    - choose:
-        - conditions:
+    # 并行执行筒灯和客厅灯带的等待和开启，失败互不影响
+    - parallel:
+        # 筒灯序列（等待设备可用后延迟2秒开启）
+        - sequence:
+            - wait_template: "{{ states('switch.linp_cn_1080373159_q3s2_on_p_3_1') not in ['unavailable', 'unknown'] }}"
+              timeout: "00:00:30"
+              continue_on_timeout: true
+            - delay:
+                seconds: 1
+            - service: switch.turn_on
+              target:
+                entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+        # 客厅灯带序列（仅在18-24点之间执行）
+        - sequence:
             - condition: template
               value_template: "{{ now().hour >= 18 }}"
-          sequence:
             # 等待设备可用（设备启动有延迟）
             - wait_template: "{{ states('switch.lumi_cn_551288517_acn032_on_p_4_1') not in ['unavailable', 'unknown'] }}"
               timeout: "00:00:30"
+              continue_on_timeout: true
             # 设备可用后，再延迟3秒开灯
             - delay:
                 seconds: 3
