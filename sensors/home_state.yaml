@@ -57,8 +57,8 @@
       device_class: presence
       # 优化逻辑：
       # 1. 门开状态（door_state为on）：立即认为在家（on），解决回家延迟15秒的问题
-      # 2. 门关状态（door_state为off，且超过30秒）：使用原始传感器状态判断
-      # 3. 门关状态（door_state为off，但少于30秒）：仍然认为在家，给原始传感器时间响应
+      # 2. 门关状态（door_state为off，且超过60秒）：使用原始传感器状态判断
+      # 3. 门关状态（door_state为off，但少于60秒）：仍然认为在家，给原始传感器时间响应
       # 4. 门状态未知：使用原始传感器状态
       value_template: >
         {% set base_sensor = 'sensor.hyd_cn_672580633_pro2_fault_p_2_1' %}
@@ -86,11 +86,11 @@
           True
         {% elif door_state == 'off' %}
           {# 门关 #}
-          {% if seconds_since_door_change < 30 %}
-            {# 关门后30秒内：仍然认为在家，给原始传感器时间响应 #}
+          {% if seconds_since_door_change < 60 %}
+            {# 关门n秒内：仍然认为在家，给原始传感器时间响应 #}
             True
           {% else %}
-            {# 关门5秒后：使用原始传感器状态判断 #}
+            {# 关门n秒后：使用原始传感器状态判断 #}
             {{ base_available }}
           {% endif %}
         {% else %}

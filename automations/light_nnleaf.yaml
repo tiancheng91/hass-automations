@@ -112,3 +112,30 @@
               target:
                 entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
               data: { "value": 252 }
+
+# ========== 空气净化器定时关闭 ==========
+- alias: 书房-空气净化器定时关闭
+  id: study_air_purifier_auto_off
+  description: 书房空气净化器开启4小时后自动关闭（3D打印期间使用）
+  trigger:
+    - platform: state
+      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+      to: "on"
+      not_from:
+        - "unavailable"
+        - "unknown"
+  condition:
+    # 确保开关当前状态为开启
+    - condition: state
+      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+      state: "on"
+  action:
+    # 延迟4小时后关闭
+    - delay: "04:00:00"
+    # 再次检查开关状态，如果仍为开启则关闭
+    - condition: state
+      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+      state: "on"
+    - service: switch.turn_off
+      target:
+        entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1

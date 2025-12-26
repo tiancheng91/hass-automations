@@ -18,16 +18,13 @@
         entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
     # 并行执行筒灯和客厅灯带的等待和开启，失败互不影响
     - parallel:
-        # 筒灯序列（等待设备可用后延迟2秒开启）
-        - sequence:
-            - wait_template: "{{ states('switch.linp_cn_1080373159_q3s2_on_p_3_1') not in ['unavailable', 'unknown'] }}"
-              timeout: "00:00:30"
-              continue_on_timeout: true
-            - delay:
-                seconds: 1
-            - service: switch.turn_on
-              target:
-                entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+        # 筒灯序列（等待设备可用后延迟1秒开启） 忽略,断电前开启状态
+        # - sequence:
+        #     - delay:
+        #         seconds: 5
+        #     - service: switch.turn_on
+        #       target:
+        #         entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
         # 客厅灯带序列（仅在18-24点之间执行）
         - sequence:
             - condition: template
