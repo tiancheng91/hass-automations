@@ -139,3 +139,24 @@
     - service: switch.turn_off
       target:
         entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+
+# ========== 拓竹打印机打印时自动开启空气净化器 ==========
+- alias: 书房-拓竹打印机打印时开启空气净化器
+  id: study_3d_printer_air_purifier_auto_on
+  description: 拓竹打印机状态变为打印中时，自动开启空气净化器
+  trigger:
+    - platform: state
+      entity_id: sensor.a1mini_0309aa490400817_print_status
+      to: "running"
+      not_from:
+        - "unavailable"
+        - "unknown"
+  condition:
+    # 确保打印机状态为打印中
+    - condition: state
+      entity_id: sensor.a1mini_0309aa490400817_print_status
+      state: "running"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
