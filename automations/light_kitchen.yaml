@@ -2,6 +2,7 @@
 # ========== 玄关无人移动超过30分钟且厨房灯开启超过25分钟 - 关闭厨房灯 ==========
 - alias: 厨房 - 玄关无人30分钟且灯开启25分钟关灯
   id: light_kitchen_auto_off
+  initial_state: false
   mode: restart
   description: 玄关无人移动超过30分钟（传感器维持在300超过1500秒），且厨房灯开启超过25分钟，关闭厨房灯
   trigger:
