@@ -113,29 +113,27 @@
                 entity_id: number.nnleaf_cn_250150441_strips_current_scene_p_3_7
               data: { "value": 252 }
 
-# ========== 空气净化器定时关闭 ==========
-- alias: 书房-空气净化器定时关闭
+# ========== 空气净化器自动关闭 ==========
+- alias: 书房-空气净化器自动关闭
   id: study_air_purifier_auto_off
-  description: 书房空气净化器开启4小时后自动关闭（3D打印期间使用）
+  description: 空气质量佳（空气优/空气良）持续超过30分钟且打印机非打印状态时，自动关闭空气净化器
   trigger:
-    - platform: state
-      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
-      to: "on"
-      not_from:
-        - "unavailable"
-        - "unknown"
+    - platform: template
+      value_template: >
+        {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良'] }}
+      for: "00:30:00"
   condition:
-    # 确保开关当前状态为开启
+    # 确保净化器当前是开启状态
     - condition: state
       entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
       state: "on"
+    # 确保打印机不是打印状态
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.a1mini_0309aa490400817_print_status
+          state: "running"
   action:
-    # 延迟4小时后关闭
-    - delay: "04:00:00"
-    # 再次检查开关状态，如果仍为开启则关闭
-    - condition: state
-      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
-      state: "on"
     - service: switch.turn_off
       target:
         entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
@@ -160,3 +158,30 @@
     - service: switch.turn_on
       target:
         entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+
+# ========== 空气污染持续超过30分钟自动开启空气净化器 ==========
+- alias: 书房-空气污染30分钟自动开启空气净化器
+  id: study_air_pollution_auto_on
+  initial_state: false
+  description: 书房空气污染状态（轻度污染及以上）持续超过30分钟且净化器关闭时，自动开启净化器并提醒
+  trigger:
+    - platform: template
+      value_template: >
+        {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['轻度污染', '中度污染', '重度污染', '严重污染'] }}
+      for: "00:30:00"
+  condition:
+    # 只在净化器关闭状态下执行
+    - condition: state
+      entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+      state: "off"
+  action:
+    # 开启空气净化器
+    - service: switch.turn_on
+      target:
+        entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
+    # 播放提醒消息
+    - service: script.xiaoai_speak
+      data:
+        text: >
+          {% set air_quality = states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') %}
+          书房空气{{ air_quality }}，已自动开启空气净化器

@@ -1,0 +1,132 @@
+# 小爱音箱播放音乐文件脚本
+# 参数：url - 音乐文件的 URL 地址（必填）
+# 示例：
+#   - service: script.xiaoai_play_music
+#     data:
+#       url: "https://raw.githubusercontent.com/user/repo/main/sounds/notification.mp3"
+
+xiaoai_play_music:
+  alias: 小爱音箱播放音乐文件
+  description: 使用小爱音箱播放指定的音乐文件，支持传入url参数
+  fields:
+    url:
+      description: 音乐文件的 URL 地址
+      example: "https://raw.githubusercontent.com/user/repo/main/sounds/notification.mp3"
+  sequence:
+    - service: media_player.play_media
+      target:
+        entity_id: media_player.xiaomi_cn_702090184_l05c
+      data:
+        media_content_id: "{{ url }}"
+        media_content_type: "music"
+
+# 小爱音箱播放文本语音脚本
+# 参数：
+#   - text: 要播放的文本内容（必填）
+#   - sound: 声音别名（可选），默认 "default"，传入 "" 可禁用提示音
+# 示例：
+#   - service: script.xiaoai_speak
+#     data:
+#       text: "你好，我是小爱同学"
+#   - service: script.xiaoai_speak
+#     data:
+#       text: "当前温度过高"
+#       sound: ""  # 禁用提示音
+
+xiaoai_speak:
+  alias: 小爱音箱播放文本语音
+  description: 使用小爱音箱播放文本语音，支持传入text和sound参数
+  fields:
+    text:
+      description: 要播放的文本内容
+      example: "你好，我是小爱同学"
+    sound:
+      description: 声音别名（可选），默认 "default"，播放文本前先播放提示音
+      example: "default"
+      default: "default"
+  sequence:
+    - variables:
+        sound_map:
+          default: "https://raw.githubusercontent.com/tiancheng91/hass-automations/master/assets/notification01.mp3"
+        sound_alias: "{{ sound | default('default') }}"
+        sound_url: >
+          {% if sound_alias == '' %}
+            {{ '' }}
+          {% elif sound_map[sound_alias] is defined %}
+            {{ sound_map[sound_alias] }}
+          {% else %}
+            {{ sound_map['default'] }}
+          {% endif %}
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ sound_url != '' }}"
+          sequence:
+            - service: script.xiaoai_play_music
+              data:
+                url: "{{ sound_url }}"
+            - delay: "00:00:02"
+    - service: notify.send_message
+      target:
+        entity_id: notify.xiaomi_cn_702090184_l05c
+      data:
+        message: "{{ text }}"
+
+# 小爱音箱执行文本指令脚本
+# 参数：
+#   - text: 要执行的文本指令内容（必填）
+#   - silent: 指令是否静默执行，默认为 true（可选）
+#   - sound: 声音别名（可选），默认为空（不播放提示音），传入 "default" 可播放提示音
+# 示例：
+#   - service: script.xiaoai_execute
+#     data:
+#       text: "打开客厅灯"
+#   - service: script.xiaoai_execute
+#     data:
+#       text: "播放音乐"
+#       silent: false
+#       sound: "default"  # 播放提示音
+
+xiaoai_execute:
+  alias: 小爱音箱执行文本指令
+  description: 使用小爱音箱执行文本指令，支持传入text、silent和sound参数
+  fields:
+    text:
+      description: 要执行的文本指令内容
+      example: "打开客厅灯"
+    silent:
+      description: 指令是否静默执行
+      example: true
+      default: true
+    sound:
+      description: 声音别名（可选），默认为空（不播放提示音），执行指令前先播放提示音
+      example: "default"
+      default: ""
+  sequence:
+    - variables:
+        sound_map:
+          default: "https://raw.githubusercontent.com/tiancheng91/hass-automations/master/assets/notification01.mp3"
+        sound_alias: "{{ sound | default('') }}"
+        sound_url: >
+          {% if sound_alias == '' %}
+            {{ '' }}
+          {% elif sound_map[sound_alias] is defined %}
+            {{ sound_map[sound_alias] }}
+          {% else %}
+            {{ '' }}
+          {% endif %}
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ sound_url != '' }}"
+          sequence:
+            - service: script.xiaoai_play_music
+              data:
+                url: "{{ sound_url }}"
+            - delay: "00:00:02"
+    - service: notify.send_message
+      target:
+        entity_id: notify.xiaomi_cn_702090184_l05c
+      data:
+        message: '{{ [text, silent | default(true) | bool] | to_json }}'
+
