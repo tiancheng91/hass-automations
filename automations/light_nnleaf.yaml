@@ -170,6 +170,10 @@
         {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['轻度污染', '中度污染', '重度污染', '严重污染'] }}
       for: "00:30:00"
   condition:
+    # 只在有人在家时触发
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: "on"
     # 只在净化器关闭状态下执行
     - condition: state
       entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
