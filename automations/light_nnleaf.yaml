@@ -188,4 +188,4 @@
       data:
         text: >
           {% set air_quality = states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') %}
-          书房空气{{ air_quality }}，已自动开启空气净化器
+          小爱提醒您，今日空气{{ air_quality }}，请减少出门，已自动开启空气净化器
