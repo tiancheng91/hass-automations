@@ -120,7 +120,7 @@
   trigger:
     - platform: template
       value_template: >
-        {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良'] }}
+        {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良', '轻度污染'] }}
       for: "00:30:00"
   condition:
     # 确保净化器当前是开启状态
