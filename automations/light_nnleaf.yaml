@@ -179,13 +179,29 @@
       entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
       state: "off"
   action:
-    # 开启空气净化器
+    # 开启空气净化器（始终执行）
     - service: switch.turn_on
       target:
         entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
-    # 播放提醒消息
-    - service: script.xiaoai_speak
-      data:
-        text: >
-          {% set air_quality = states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') %}
-          小爱提醒您，今日空气{{ air_quality }}，请减少出门，已自动开启空气净化器
+    # 检查今天是否已经播报过，如果未播报则播报并更新日期
+    - choose:
+        # 如果今天还未播报，执行播报
+        - conditions:
+            - condition: template
+              value_template: >
+                {% set last_date = states('input_text.air_purifier_last_announce_date') | default('') %}
+                {% set today = now().strftime('%Y-%m-%d') %}
+                {{ last_date != today }}
+          sequence:
+            # 播放提醒消息
+            - service: script.xiaoai_speak
+              data:
+                text: >
+                  {% set air_quality = states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') %}
+                  小爱提醒您，空气{{ air_quality }}，已自动开启空气净化器
+            # 更新最后播报日期为今天
+            - service: input_text.set_value
+              target:
+                entity_id: input_text.air_purifier_last_announce_date
+              data:
+                value: "{{ now().strftime('%Y-%m-%d') }}"

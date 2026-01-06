@@ -1,0 +1,6 @@
+# 空气净化器相关辅助状态
+# 记录空气净化器提醒的最后播报日期
+air_purifier_last_announce_date:
+  name: 空气净化器最后播报日期
+  initial: ""
+
