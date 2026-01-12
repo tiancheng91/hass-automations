@@ -118,11 +118,24 @@
   id: study_air_purifier_auto_off
   description: 空气质量佳（空气优/空气良）持续超过30分钟且打印机非打印状态时，自动关闭空气净化器
   trigger:
-    - platform: template
+    # 空气质量状态变化时触发
+    - platform: state
+      entity_id: sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8
+      to:
+        - "空气优"
+        - "空气良"
+        - "轻度污染"
+    # 打印机停止打印时也触发，以便重新检查空气质量条件
+    - platform: state
+      entity_id: sensor.a1mini_0309aa490400817_print_status
+      from: "running"
+      not_to: "running"
+  condition:
+    # 空气质量必须持续30分钟为良/优
+    - condition: template
       value_template: >
         {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良', '轻度污染'] }}
       for: "00:30:00"
-  condition:
     # 确保净化器当前是开启状态
     - condition: state
       entity_id: switch.zhimi_cn_706039150_rma3_on_p_2_1
