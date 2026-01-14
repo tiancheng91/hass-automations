@@ -1,10 +1,5 @@
-# 优化后的在家状态传感器配置
-# 结合开门/关门事件和原始传感器状态，提升响应速度
-# 
-# 在 configuration.yaml 中添加：
-# template: !include_dir_merge_list sensors/
-# 
-# 注意：已从旧版 platform: template 格式迁移到新版 template: 格式
+# Binary Sensor 模板配置
+# 包含所有 binary_sensor 类型的模板实体
 
 - binary_sensor:
     # 门状态传感器 - 基于开门/关门事件
@@ -112,7 +107,7 @@
     # 用于判断空气质量是否持续良好，支持在状态之间变动时也能正确判断持续时间
     - default_entity_id: binary_sensor.study_air_quality_good
       name: "书房空气质量良好"
-      device_class: air_quality
+      # 注意：binary_sensor 不支持 air_quality device_class，已移除
       state: >
         {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良', '轻度污染'] }}
       

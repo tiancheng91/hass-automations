@@ -15,7 +15,13 @@
 # # 包含所有 rest_command 配置
 # rest_command: !include_dir_merge_named rest_commands/
 #
-# # 包含所有 template 配置
+# # 包含所有 template 配置（按类型拆分）
+# # templates/ 目录下按类型拆分文件：
+# #   - templates/binary_sensor.yaml  # 所有 binary_sensor 类型
+# #   - templates/sensor.yaml          # 所有 sensor 类型
+# #   - templates/switch.yaml          # 所有 switch 类型（如有）
+# #   - templates/light.yaml           # 所有 light 类型（如有）
+# # 等等...
 # template: !include_dir_merge_list templates/
 #
 # ============================================

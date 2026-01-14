@@ -1,0 +1,9 @@
+# Sensor 模板配置
+# 包含所有 sensor 类型的模板实体
+# 
+# 示例：如果需要添加 sensor 类型的模板，可以在这里添加
+# 
+# - sensor:
+#     - name: "示例传感器"
+#       state: >
+#         {{ states('sensor.example') }}
