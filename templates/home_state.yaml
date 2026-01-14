@@ -2,17 +2,18 @@
 # 结合开门/关门事件和原始传感器状态，提升响应速度
 # 
 # 在 configuration.yaml 中添加：
-# binary_sensor: !include_dir_merge_list sensors/
+# template: !include_dir_merge_list sensors/
+# 
+# 注意：已从旧版 platform: template 格式迁移到新版 template: 格式
 
-- platform: template
-  sensors:
+- binary_sensor:
     # 门状态传感器 - 基于开门/关门事件
-    door_state:
-      friendly_name: "门状态"
+    - default_entity_id: binary_sensor.door_state
+      name: "门状态"
       device_class: door
       # 基于事件中的"开门"和"关门"来更新门状态
       # 开门 -> on (门开), 关门 -> off (门关)
-      value_template: >
+      state: >
         {% set door_event = 'event.xiaomi_cn_1079257233_hub1_virtual_event_e_4_1' %}
         {% set door_event_obj = states[door_event] %}
         
@@ -44,7 +45,7 @@
           False
         {% endif %}
       
-      icon_template: >
+      icon: >
         {% if is_state('binary_sensor.door_state', 'on') %}
           mdi:door-open
         {% else %}
@@ -52,15 +53,15 @@
         {% endif %}
     
     # 在家状态传感器
-    home_state:
-      friendly_name: "在家状态"
+    - default_entity_id: binary_sensor.home_state
+      name: "在家状态"
       device_class: presence
       # 优化逻辑：
       # 1. 门开状态（door_state为on）：立即认为在家（on），解决回家延迟15秒的问题
       # 2. 门关状态（door_state为off，且超过60秒）：使用原始传感器状态判断
       # 3. 门关状态（door_state为off，但少于60秒）：仍然认为在家，给原始传感器时间响应
       # 4. 门状态未知：使用原始传感器状态
-      value_template: >
+      state: >
         {% set base_sensor = 'sensor.hyd_cn_672580633_pro2_fault_p_2_1' %}
         {% set door_state_entity = 'binary_sensor.door_state' %}
         
@@ -99,7 +100,7 @@
         {% endif %}
       
       # 设备类属性
-      icon_template: >
+      icon: >
         {% if is_state('binary_sensor.home_state', 'on') %}
           mdi:home
         {% else %}
@@ -109,16 +110,15 @@
     # 空气质量良好状态传感器
     # 当空气质量在 ['空气优', '空气良', '轻度污染'] 范围内时返回 on
     # 用于判断空气质量是否持续良好，支持在状态之间变动时也能正确判断持续时间
-    study_air_quality_good:
-      friendly_name: "书房空气质量良好"
+    - default_entity_id: binary_sensor.study_air_quality_good
+      name: "书房空气质量良好"
       device_class: air_quality
-      value_template: >
+      state: >
         {{ states('sensor.zhimi_cn_706039150_rma3_air_quality_p_3_8') in ['空气优', '空气良', '轻度污染'] }}
       
-      icon_template: >
+      icon: >
         {% if is_state('binary_sensor.study_air_quality_good', 'on') %}
           mdi:air-filter
         {% else %}
           mdi:air-filter
         {% endif %}
-

@@ -15,8 +15,8 @@
 # # 包含所有 rest_command 配置
 # rest_command: !include_dir_merge_named rest_commands/
 #
-# # 包含所有 binary_sensor 配置（包括优化后的 home_state 和 door_state）
-# binary_sensor: !include_dir_merge_list sensors/
+# # 包含所有 template 配置
+# template: !include_dir_merge_list templates/
 #
 # ============================================
 # 注意事项：
