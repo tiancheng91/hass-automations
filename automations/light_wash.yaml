@@ -79,7 +79,7 @@
       target:
         entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
       data:
-        brightness_pct: 15
+        brightness_pct: 10
         transition: 3
 
 # ========== 无移动600秒 - 关闭或降低亮度 ==========
