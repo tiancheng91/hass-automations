@@ -27,7 +27,7 @@
         max_brightness_pct: >
           {% if current_hour >= 0 and current_hour < 8 %}
             {# 夜间00-08点，最高亮度25% #}
-            40
+            25
           {% elif current_hour >= 8 and current_hour < 18 %}
             {# 白天08-17点，最高亮度45% #}
             40
@@ -35,6 +35,14 @@
             {# 夜间18-24点，最高亮度60% #}
             65
           {% endif %}
+
+    # 优化条件：如果当前亮度与目标 max_brightness_pct 相同，则跳过亮度调整
+    - condition: template
+      value_template: >
+        {% set light = states.light.mijia_cn_group_1755950629190250500_group3_s_2_light %}
+        {% set current_brightness = (light.attributes.brightness or 0) | int * 100 // 255 %}
+        {{ (current_brightness | int) != (max_brightness_pct | int) }}
+    # 渐变开灯
     - service: light.turn_on
       target:
         entity_id: light.mijia_cn_group_1755950629190250500_group3_s_2_light
