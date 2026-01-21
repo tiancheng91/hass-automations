@@ -1,0 +1,24 @@
+# 猫砂盆自动化配置
+# 小佩智能全自动猫厕所 MAX2 - 垃圾箱状态监控
+# ========== 垃圾箱满了自动创建待办事项 ==========
+- alias: 阳台 - 猫砂盆垃圾箱满了创建待办
+  id: cat_litter_wastebin_full_todo
+  mode: single
+  description: 当猫砂盆垃圾箱状态从off变为on时（表示垃圾箱已满），自动在Todoist中创建清理待办事项
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_wastebin
+      from: "off"
+      to: "on"
+      not_from:
+        - "unavailable"
+        - "unknown"
+      not_to:
+        - "unavailable"
+        - "unknown"
+  action:
+    - service: todoist.new_task
+      data:
+        content: 清理猫砂盆集便仓
+        project: 家里
+        due_date_string: today
