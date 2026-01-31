@@ -5,17 +5,12 @@
   id: cat_litter_wastebin_full_todo
   mode: single
   description: 当猫砂盆垃圾箱状态从off变为on时（表示垃圾箱已满），自动在Todoist中创建清理待办事项
+  # 注意：from 与 not_from 不能同时使用，to 与 not_to 不能同时使用
   trigger:
     - platform: state
       entity_id: binary_sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_wastebin
       from: "off"
       to: "on"
-      not_from:
-        - "unavailable"
-        - "unknown"
-      not_to:
-        - "unavailable"
-        - "unknown"
   action:
     - service: todoist.new_task
       data:
