@@ -115,3 +115,46 @@
       target:
         entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
 
+# ========== 客厅人在 - 联动玄关开灯 ==========
+- alias: 玄关 - 客厅有人开灯
+  id: light_entrance_living_room_presence_on
+  mode: single
+  description: 客厅人在传感器从 off 变为 on 时，先开氛围灯，延迟 3 秒后开筒灯；仅有人在家时执行
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_presence
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: 'on'
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.giot_cn_1088542711_v6oodm_on_p_2_1
+    - delay:
+        seconds: 3
+    - service: switch.turn_on
+      target:
+        entity_id: switch.linp_cn_1080373159_q3s2_on_p_3_1
+
+# ========== 客厅无人 5 分钟 - 关玄关灯 ==========
+- alias: 玄关 - 客厅无人5分钟关灯
+  id: light_entrance_living_room_presence_off
+  mode: single
+  description: 客厅人在传感器变为 off 后持续 5 分钟，关闭玄关氛围灯与筒灯
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_presence
+      from: 'on'
+      to: 'off'
+      for:
+        minutes: 5
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.giot_cn_1088542711_v6oodm_on_p_2_1
+          - switch.linp_cn_1080373159_q3s2_on_p_3_1
+

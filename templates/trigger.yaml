@@ -1,0 +1,17 @@
+
+# 客厅人在：触发模板 + auto_off
+- triggers:
+    - trigger: state
+      entity_id: event.xiaomi_cn_1079257233_hub1_virtual_event_e_4_1
+  binary_sensor:
+    - default_entity_id: binary_sensor.living_room_presence
+      name: "客厅人在"
+      device_class: occupancy
+      state: >
+        {% if trigger.to_state.attributes.get('事件名称', '') == '有人移动' %}
+          true
+        {% else %}
+          {{ this.state == 'on' }}
+        {% endif %}
+      auto_off:
+        minutes: 15
