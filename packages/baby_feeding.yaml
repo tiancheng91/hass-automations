@@ -32,6 +32,15 @@ input_number:
     unit_of_measurement: h
     mode: box
     initial: 4
+  baby_record_debounce_minutes:
+    name: 记录按钮防抖间隔
+    icon: mdi:gesture-tap-hold
+    min: 1
+    max: 120
+    step: 1
+    unit_of_measurement: min
+    mode: box
+    initial: 1
 
 input_select:
   baby_diaper_type:
@@ -62,6 +71,18 @@ input_datetime:
     has_date: true
     has_time: true
     icon: mdi:clock-outline
+
+# 记录按钮去抖：成功写入后按 input_number.baby_record_debounce_minutes 启动计时，计时内忽略同按钮重复触发
+# timer 默认时长仅作占位；实际每次 timer.start 会传入动态 duration（秒）
+timer:
+  baby_record_feeding_debounce:
+    name: 喂奶记录防抖
+    icon: mdi:timer-lock-outline
+    duration: '00:01:00'
+  baby_record_diaper_debounce:
+    name: 尿布记录防抖
+    icon: mdi:timer-lock-outline
+    duration: '00:01:00'
 
 template:
   - sensor:

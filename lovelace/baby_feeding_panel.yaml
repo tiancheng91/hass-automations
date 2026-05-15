@@ -7,6 +7,7 @@ cards:
     content: |
       ### 婴儿护理
       先调节数值与类型，再点按钮写入记录（Logbook + Server酱）。
+      「记录按钮防抖间隔」对喂奶、换尿布两个按钮共用。
 
   - type: entities
     title: 喂奶
@@ -16,6 +17,7 @@ cards:
         name: 距上次喂奶
       - entity: input_number.baby_milk_volume
       - entity: input_number.baby_milk_total_today
+      - entity: input_number.baby_record_debounce_minutes
       - entity: input_number.baby_feeding_reminder_hours
       - entity: input_datetime.baby_last_feeding
       - entity: input_button.baby_record_feeding

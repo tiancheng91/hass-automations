@@ -3,10 +3,16 @@
 - alias: 婴儿护理 - 记录一次喂奶
   id: baby_feeding_log_feed
   mode: single
-  description: 按下「确认记录喂奶」后，更新上次喂奶时间、累加今日奶量，并写入 Logbook 与 Server酱。
+  description: >
+    按下「确认记录喂奶」后，更新上次喂奶时间、累加今日奶量，并写入 Logbook 与 Server酱。
+    成功记录后按「记录按钮防抖间隔」启动计时，计时内再次按同一按钮会被忽略。
   trigger:
     - platform: state
       entity_id: input_button.baby_record_feeding
+  condition:
+    - condition: state
+      entity_id: timer.baby_record_feeding_debounce
+      state: idle
   action:
     - variables:
         vol: "{{ states('input_number.baby_milk_volume') | int(0) }}"
@@ -33,14 +39,25 @@
         content: >
           奶量 {{ vol | int(0) }} ml，时间 {{ now().strftime('%H:%M') }}，
           今日累计 {{ (vol | int(0)) + (cur | int(0)) }} ml。
+    - service: timer.start
+      target:
+        entity_id: timer.baby_record_feeding_debounce
+      data:
+        duration: '{{ (states(''input_number.baby_record_debounce_minutes'') | int(1)) * 60 }}'
 
 - alias: 婴儿护理 - 记录一次换尿布
   id: baby_feeding_log_diaper
   mode: single
-  description: 按下「确认记录换尿布」后，根据所选类型更新上次换尿布时间，并写入 Logbook 与 Server酱。
+  description: >
+    按下「确认记录换尿布」后，根据所选类型更新上次换尿布时间，并写入 Logbook 与 Server酱。
+    成功记录后按「记录按钮防抖间隔」启动计时，计时内再次按同一按钮会被忽略。
   trigger:
     - platform: state
       entity_id: input_button.baby_record_diaper
+  condition:
+    - condition: state
+      entity_id: timer.baby_record_diaper_debounce
+      state: idle
   action:
     - service: input_datetime.set_datetime
       target:
@@ -58,6 +75,11 @@
         content: >
           类型 {{ states('input_select.baby_diaper_type') }}，
           时间 {{ now().strftime('%H:%M') }}。
+    - service: timer.start
+      target:
+        entity_id: timer.baby_record_diaper_debounce
+      data:
+        duration: '{{ (states(''input_number.baby_record_debounce_minutes'') | int(1)) * 60 }}'
 
 - alias: 婴儿护理 - 每日零点重置今日奶量
   id: baby_feeding_reset_daily_milk
