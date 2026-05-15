@@ -24,6 +24,11 @@
 # # 等等...
 # template: !include_dir_merge_list templates/
 #
+# # 婴儿护理：input_select / input_button / input_datetime 等（与 inputs/ 中仅 input_number 并存）
+# homeassistant:
+#   packages:
+#     baby_feeding: !include packages/baby_feeding.yaml
+#
 # ============================================
 # 注意事项：
 # - secrets.yaml 文件用于存储敏感信息（如 API token）

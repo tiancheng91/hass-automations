@@ -1,0 +1,39 @@
+# 复制到仪表盘「原始配置编辑器」或 ui-lovelace.yaml 的 views 下某一 view 的 cards 中
+# 依赖实体：packages/baby_feeding.yaml + templates/sensor.yaml + automations/baby_feeding.yaml
+
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      ### 婴儿护理
+      先调节数值与类型，再点按钮写入记录（Logbook + Server酱）。
+
+  - type: entities
+    title: 喂奶
+    show_header_toggle: false
+    entities:
+      - entity: sensor.baby_minutes_since_last_feeding
+        name: 距上次喂奶
+      - entity: input_number.baby_milk_volume
+      - entity: input_number.baby_milk_total_today
+      - entity: input_number.baby_feeding_reminder_hours
+      - entity: input_datetime.baby_last_feeding
+      - entity: input_button.baby_record_feeding
+        name: 保存喂奶记录
+
+  - type: entities
+    title: 换尿布
+    show_header_toggle: false
+    entities:
+      - entity: sensor.baby_minutes_since_last_diaper
+        name: 距上次换尿布
+      - entity: input_select.baby_diaper_type
+      - entity: input_datetime.baby_last_diaper
+      - entity: input_button.baby_record_diaper
+        name: 保存换尿布记录
+
+  - type: history-graph
+    title: 近 24h 喂奶间隔（分钟）
+    hours_to_show: 24
+    entities:
+      - entity: sensor.baby_minutes_since_last_feeding

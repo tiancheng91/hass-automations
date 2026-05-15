@@ -1,0 +1,102 @@
+# 婴儿喂养 / 换尿布追踪（Helpers + 模板传感器，通过 homeassistant.packages 加载）
+# 在 configuration.yaml 的 homeassistant.packages 下引用本文件，例如：
+# homeassistant:
+#   packages:
+#     baby_feeding: !include packages/baby_feeding.yaml
+
+input_number:
+  baby_milk_volume:
+    name: 本次奶量
+    icon: mdi:baby-bottle-outline
+    min: 0
+    max: 300
+    step: 5
+    unit_of_measurement: ml
+    mode: slider
+    initial: 120
+  baby_milk_total_today:
+    name: 今日累计奶量
+    icon: mdi:chart-bell-curve-cumulative
+    min: 0
+    max: 5000
+    step: 5
+    unit_of_measurement: ml
+    mode: box
+    initial: 0
+  baby_feeding_reminder_hours:
+    name: 喂奶提醒间隔（小时）
+    icon: mdi:timer-alert-outline
+    min: 1
+    max: 8
+    step: 0.5
+    unit_of_measurement: h
+    mode: box
+    initial: 4
+
+input_select:
+  baby_diaper_type:
+    name: 尿布记录类型
+    icon: mdi:baby-face-outline
+    options:
+      - 干
+      - 湿
+      - 便便
+      - 干+便便
+
+input_button:
+  baby_record_feeding:
+    name: 确认记录喂奶
+    icon: mdi:bottle-tonic-plus
+  baby_record_diaper:
+    name: 确认记录换尿布
+    icon: mdi:baby-buggy
+
+input_datetime:
+  baby_last_feeding:
+    name: 上次喂奶时间
+    has_date: true
+    has_time: true
+    icon: mdi:clock-start
+  baby_last_diaper:
+    name: 上次换尿布时间
+    has_date: true
+    has_time: true
+    icon: mdi:clock-outline
+
+template:
+  - sensor:
+      - default_entity_id: sensor.baby_minutes_since_last_feeding
+        name: 距上次喂奶
+        unique_id: baby_minutes_since_last_feeding
+        unit_of_measurement: min
+        icon: mdi:timer-sand
+        state: >
+          {% set raw = states('input_datetime.baby_last_feeding') %}
+          {% if raw in ['unknown', 'unavailable', ''] %}
+            unknown
+          {% else %}
+            {% set ts = as_timestamp(raw) %}
+            {% if ts %}
+              {{ ((now().timestamp() - ts) / 60) | round(0) | int }}
+            {% else %}
+              unknown
+            {% endif %}
+          {% endif %}
+
+      - default_entity_id: sensor.baby_minutes_since_last_diaper
+        name: 距上次换尿布
+        unique_id: baby_minutes_since_last_diaper
+        unit_of_measurement: min
+        icon: mdi:timer-outline
+        state: >
+          {% set raw = states('input_datetime.baby_last_diaper') %}
+          {% if raw in ['unknown', 'unavailable', ''] %}
+            unknown
+          {% else %}
+            {% set ts = as_timestamp(raw) %}
+            {% if ts %}
+              {{ ((now().timestamp() - ts) / 60) | round(0) | int }}
+            {% else %}
+              unknown
+            {% endif %}
+          {% endif %}

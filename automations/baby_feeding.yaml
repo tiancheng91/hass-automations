@@ -1,0 +1,106 @@
+# 婴儿喂养与换尿布记录（面板 + Server酱 + Logbook）
+
+- alias: 婴儿护理 - 记录一次喂奶
+  id: baby_feeding_log_feed
+  mode: single
+  description: 按下「确认记录喂奶」后，更新上次喂奶时间、累加今日奶量，并写入 Logbook 与 Server酱。
+  trigger:
+    - platform: state
+      entity_id: input_button.baby_record_feeding
+  action:
+    - variables:
+        vol: "{{ states('input_number.baby_milk_volume') | int(0) }}"
+        cur: "{{ states('input_number.baby_milk_total_today') | int(0) }}"
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.baby_last_feeding
+      data:
+        datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.baby_milk_total_today
+      data:
+        value: '{{ (vol | int(0)) + (cur | int(0)) }}'
+    - service: logbook.log
+      data:
+        name: 婴儿喂养记录
+        entity_id: input_datetime.baby_last_feeding
+        message: >
+          喂奶 {{ vol | int(0) }} ml（今日累计 {{ (vol | int(0)) + (cur | int(0)) }} ml）
+    - service: script.serverchan_push
+      data:
+        title: 喂养记录已保存
+        content: >
+          奶量 {{ vol | int(0) }} ml，时间 {{ now().strftime('%H:%M') }}，
+          今日累计 {{ (vol | int(0)) + (cur | int(0)) }} ml。
+
+- alias: 婴儿护理 - 记录一次换尿布
+  id: baby_feeding_log_diaper
+  mode: single
+  description: 按下「确认记录换尿布」后，根据所选类型更新上次换尿布时间，并写入 Logbook 与 Server酱。
+  trigger:
+    - platform: state
+      entity_id: input_button.baby_record_diaper
+  action:
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.baby_last_diaper
+      data:
+        datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+    - service: logbook.log
+      data:
+        name: 婴儿换尿布记录
+        entity_id: input_datetime.baby_last_diaper
+        message: "类型：{{ states('input_select.baby_diaper_type') }}"
+    - service: script.serverchan_push
+      data:
+        title: 换尿布已记录
+        content: >
+          类型 {{ states('input_select.baby_diaper_type') }}，
+          时间 {{ now().strftime('%H:%M') }}。
+
+- alias: 婴儿护理 - 每日零点重置今日奶量
+  id: baby_feeding_reset_daily_milk
+  mode: single
+  description: 每天 00:01 将「今日累计奶量」归零，便于新一天统计。
+  trigger:
+    - platform: time
+      at: '00:01:00'
+  action:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.baby_milk_total_today
+      data:
+        value: 0
+
+- alias: 婴儿护理 - 喂奶间隔超时提醒
+  id: baby_feeding_interval_reminder
+  mode: single
+  description: >
+    当「距上次喂奶」超过在 input_number.baby_feeding_reminder_hours 中设定的小时数、
+    且处于 07:00–23:00、有人在家时，通过 Server酱推送一次提醒。
+  trigger:
+    - platform: template
+      value_template: >
+        {% set m = states('sensor.baby_minutes_since_last_feeding') %}
+        {% if m in ['unknown', 'unavailable', 'none', ''] %}
+          false
+        {% else %}
+          {% set minutes = m | int(0) %}
+          {% set limit = (states('input_number.baby_feeding_reminder_hours') | float(4) * 60) | int %}
+          {{ minutes >= limit }}
+        {% endif %}
+  condition:
+    - condition: state
+      entity_id: binary_sensor.home_state
+      state: 'on'
+    - condition: time
+      after: '07:00:00'
+      before: '23:00:00'
+  action:
+    - service: script.serverchan_push
+      data:
+        title: 喂奶提醒
+        content: >
+          距离上次喂奶已超过 {{ states('input_number.baby_feeding_reminder_hours') | float(4) }} 小时，
+          当前间隔约 {{ states('sensor.baby_minutes_since_last_feeding') }} 分钟，请确认是否需要喂奶。
