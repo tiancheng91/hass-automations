@@ -1,10 +1,10 @@
-# 婴儿喂养与换尿布记录（面板 + Server酱 + Logbook）
+# 婴儿喂养与换尿布记录（面板 + Logbook；间隔提醒仍走 Server酱）
 
 - alias: 婴儿护理 - 记录一次喂奶
   id: baby_feeding_log_feed
   mode: single
   description: >
-    按下「确认记录喂奶」后，更新上次喂奶时间、累加今日奶量，并写入 Logbook 与 Server酱。
+    按下「确认记录喂奶」后，更新上次喂奶时间、累加今日奶量，并写入 Logbook。
     成功记录后按「记录按钮防抖间隔」启动计时，计时内再次按同一按钮会被忽略。
   trigger:
     - platform: state
@@ -33,12 +33,6 @@
         entity_id: input_datetime.baby_last_feeding
         message: >
           喂奶 {{ vol | int(0) }} ml（今日累计 {{ (vol | int(0)) + (cur | int(0)) }} ml）
-    - service: script.serverchan_push
-      data:
-        title: 喂养记录已保存
-        content: >
-          奶量 {{ vol | int(0) }} ml，时间 {{ now().strftime('%H:%M') }}，
-          今日累计 {{ (vol | int(0)) + (cur | int(0)) }} ml。
     - service: timer.start
       target:
         entity_id: timer.baby_record_feeding_debounce
@@ -49,7 +43,7 @@
   id: baby_feeding_log_diaper
   mode: single
   description: >
-    按下「确认记录换尿布」后，根据所选类型更新上次换尿布时间，并写入 Logbook 与 Server酱。
+    按下「确认记录换尿布」后，根据所选类型更新上次换尿布时间，并写入 Logbook。
     成功记录后按「记录按钮防抖间隔」启动计时，计时内再次按同一按钮会被忽略。
   trigger:
     - platform: state
@@ -69,12 +63,6 @@
         name: 婴儿换尿布记录
         entity_id: input_datetime.baby_last_diaper
         message: "类型：{{ states('input_select.baby_diaper_type') }}"
-    - service: script.serverchan_push
-      data:
-        title: 换尿布已记录
-        content: >
-          类型 {{ states('input_select.baby_diaper_type') }}，
-          时间 {{ now().strftime('%H:%M') }}。
     - service: timer.start
       target:
         entity_id: timer.baby_record_diaper_debounce
