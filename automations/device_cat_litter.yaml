@@ -12,8 +12,7 @@
       from: "off"
       to: "on"
   action:
-    - service: todoist.new_task
+    - service: script.serverchan_push
       data:
-        content: 清理猫砂盆集便仓
-        project: 家里
-        due_date_string: today
+        title: "猫砂盆集便仓已满"
+        content: "请及时清理猫砂盆集便仓"
