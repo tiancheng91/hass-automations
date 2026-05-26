@@ -1,0 +1,32 @@
+# ============================================
+# Claw 执行任务脚本
+# ============================================
+#
+# 调用 OpenClaw 接口执行自然语言任务，message 为动态内容。
+# 任务可能耗时较长，rest_command 超时已设为 600 秒。
+#
+# 调用示例：
+#   - service: script.claw_execute
+#     data:
+#       message: "给微信用户 天成 发送明天天气预报"
+#
+# 模板动态内容：
+#   - service: script.claw_execute
+#     data:
+#       message: "{{ '当前温度 ' + states('sensor.living_temperature') }}"
+#
+# ============================================
+
+claw_execute:
+  alias: Claw 执行任务
+  description: 调用 Claw OpenClaw 接口执行用户指令，message 为动态任务描述
+  mode: single
+  fields:
+    message:
+      description: 发送给 Claw 的任务/消息内容
+      example: "给微信用户 天成 发送明天天气预报"
+      required: true
+  sequence:
+    - service: rest_command.claw_chat
+      data:
+        message: "{{ message }}"

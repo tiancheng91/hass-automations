@@ -32,6 +32,6 @@
 # ============================================
 # 注意事项：
 # - secrets.yaml 文件用于存储敏感信息（如 API token）
-# - 请确保 secrets.yaml 文件已创建并配置了 serverchan_token
+# - 请确保 secrets.yaml 文件已创建并配置了 serverchan_token、claw_token
 # - 建议将 secrets.yaml 添加到 .gitignore 以避免泄露敏感信息
 #

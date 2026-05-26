@@ -1,0 +1,10 @@
+# Claw OpenClaw 聊天补全接口
+# 由 script.claw_execute 调用，message 为动态任务内容
+claw_chat:
+  url: 'http://claw.appsvc.net/v1/chat/completions'
+  method: post
+  content_type: 'application/json'
+  timeout: 600
+  headers:
+    Authorization: 'Bearer {{ secrets.claw_token }}'
+  payload: '{"model":"openclaw/default","messages":[{"role":"user","content":{{ message | to_json }}]}'
