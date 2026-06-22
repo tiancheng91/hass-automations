@@ -1,5 +1,9 @@
-# 主卧夜间温度与离家/回家设备控制
+# 主卧与次卧温度与离家/回家设备控制
 # 空调模式与目标温度由人工在设备端设置，自动化仅 turn_on/turn_off
+# 主卧自动化受 input_boolean.hass_mode_master 控制
+# 次卧自动化受 input_boolean.hass_mode_baby 控制
+
+# ========== 主卧 ==========
 
 - alias: 主卧 - 温度高_开空调
   id: bedroom_climate_on
@@ -16,6 +20,9 @@
       for:
         minutes: 5
   condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_master
+      state: "on"
     - condition: state
       entity_id: binary_sensor.home_state
       state: "on"
@@ -48,6 +55,9 @@
     - platform: time
       at: "02:00:00"
   condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_master
+      state: "on"
     - condition: time
       after: '01:00'
       before: '08:00'
@@ -76,11 +86,73 @@
       to: "off"
       for:
         minutes: 10
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_master
+      state: "on"
   action:
     - service: climate.turn_off
       entity_id: climate.090615_cn_proxy_681594875_00003_ktf
     - service: fan.turn_off
       entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
+
+- alias: 主卧 - 动态调风速
+  id: bedroom_climate_fan_adjust
+  mode: single
+  initial_state: true
+  description: >-
+    空调开启状态下，根据室温动态调整风速：
+    >=31°C 高风，30-31°C 中风，29-30°C 低风，<29°C 自动风。
+    每5分钟检查一次。
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_master
+      state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+          state: 'off'
+  action:
+    - choose:
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              attribute: current_temperature
+              above: 31
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              data:
+                fan_mode: 高风
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              attribute: current_temperature
+              above: 30
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              data:
+                fan_mode: 中风
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              attribute: current_temperature
+              above: 29
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+              data:
+                fan_mode: 低风
+      default:
+        - service: climate.set_fan_mode
+          entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+          data:
+            fan_mode: 自动
 
 - alias: 主卧 - 开启设备
   id: bedroom_turn_on
@@ -95,6 +167,9 @@
       for:
         minutes: 5
   condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_master
+      state: "on"
     - condition: numeric_state
       entity_id: climate.090615_cn_proxy_681594875_00003_ktf
       attribute: current_temperature
@@ -102,3 +177,149 @@
   action:
     - service: fan.turn_on
       entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
+
+# ========== 次卧（婴儿房） ==========
+
+- alias: 次卧 - 温度高_开空调
+  id: baby_room_climate_on
+  mode: single
+  initial_state: true
+  description: >-
+    全天候运行，室温持续高于28°C达5分钟且空调为关闭状态时自动开空调，
+    默认设为cool模式27°C、自动风，随后根据温差动态调整风速。
+  trigger:
+    - platform: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      attribute: current_temperature
+      above: 28
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_baby
+      state: "on"
+    - condition: state
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      state: 'off'
+  action:
+    - service: climate.turn_on
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+    - service: climate.set_temperature
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      data:
+        temperature: 27
+        hvac_mode: cool
+    - service: climate.set_fan_mode
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      data:
+        fan_mode: 自动
+
+- alias: 次卧 - 温度低_关空调
+  id: baby_room_climate_off
+  mode: single
+  initial_state: true
+  description: >-
+    全天候运行，室温持续低于26°C达10分钟且空调非关闭状态时关空调。
+  trace:
+    stored_traces: 20
+  trigger:
+    - platform: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      attribute: current_temperature
+      below: 26
+      for:
+        minutes: 10
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_baby
+      state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+          state: 'off'
+    - condition: numeric_state
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+      attribute: current_temperature
+      below: 26
+  action:
+    - service: climate.turn_off
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+
+- alias: 次卧 - 动态调风速
+  id: baby_room_climate_fan_adjust
+  mode: single
+  initial_state: true
+  description: >-
+    空调开启状态下，根据室温动态调整风速：
+    >=30°C 高风，29-30°C 中风，28-29°C 低风，<28°C 自动风。
+    每5分钟检查一次。
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_baby
+      state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+          state: 'off'
+  action:
+    - choose:
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              attribute: current_temperature
+              above: 30
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              data:
+                fan_mode: 高风
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              attribute: current_temperature
+              above: 29
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              data:
+                fan_mode: 中风
+        - conditions:
+            - condition: numeric_state
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              attribute: current_temperature
+              above: 28
+          sequence:
+            - service: climate.set_fan_mode
+              entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+              data:
+                fan_mode: 低风
+      default:
+        - service: climate.set_fan_mode
+          entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+          data:
+            fan_mode: 自动
+
+- alias: 次卧 - 关闭设备
+  id: baby_room_turn_off_all
+  mode: single
+  initial_state: true
+  description: 离家状态持续10分钟后，关闭次卧空调。
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
+      from: "on"
+      to: "off"
+      for:
+        minutes: 10
+  condition:
+    - condition: state
+      entity_id: input_boolean.hass_mode_baby
+      state: "on"
+  action:
+    - service: climate.turn_off
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
