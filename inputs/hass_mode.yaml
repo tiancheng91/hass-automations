@@ -1,7 +1,0 @@
-hass_mode_master:
-  name: 主卧自动化开关
-  icon: mdi:home-automation
-
-hass_mode_baby:
-  name: 次卧自动化开关
-  icon: mdi:home-automation
