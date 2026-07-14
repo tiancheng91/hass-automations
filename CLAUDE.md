@@ -15,6 +15,10 @@
 - **supported_features**: 393
 - 自动化会设置 hvac_mode=cool、temperature=27、fan_mode=自动，并根据温差动态调风速
 
+### 客厅空调
+- **entity_id**: `climate.090615_cn_proxy_681594875_00004_ktf`
+- 无独立自动化开关；每30分钟在空调开启时维持目标温度（10:00-21:00 为28°C，其它时间为29°C）、fan_mode=自动
+
 ## 辅助实体
 
 ### input_boolean.hass_mode
