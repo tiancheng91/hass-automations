@@ -1,16 +1,17 @@
 # 客厅空调自动化控制
-# 每30分钟检查一次，空调开启时强制目标温度与风量自动
-# 白天(10:00-21:00)目标温度28°C，其它时间29°C
+# 每30分钟检查一次，空调开启时强制目标温度与风量
+# 白天(10:00-21:00)目标温度28°C、风量自动；夜间目标温度29°C、风量低风
 # 无独立自动化开关，始终生效
 
 automation:
-  - alias: 客厅 - 维持目标温度与自动风
+  - alias: 客厅 - 维持目标温度与风量
     id: living_room_climate_maintain
     mode: single
     initial_state: true
     description: >-
       每30分钟检查一次，仅在空调开启时执行：
-      白天(10:00-21:00)目标温度设为28°C，其它时间设为29°C，风量设为自动。
+      白天(10:00-21:00)目标温度28°C、风量自动；
+      夜间目标温度29°C、风量低风。
     trigger:
       - platform: time_pattern
         minutes: "/30"
@@ -22,7 +23,9 @@ automation:
             state: 'off'
     action:
       - variables:
-          target_temp: "{{ 28 if 10 <= now().hour < 21 else 29 }}"
+          is_daytime: "{{ 10 <= now().hour < 21 }}"
+          target_temp: "{{ 28 if is_daytime else 29 }}"
+          target_fan: "{{ '自动' if is_daytime else '低风' }}"
       - service: climate.set_temperature
         entity_id: climate.090615_cn_proxy_681594875_00004_ktf
         data:
@@ -30,4 +33,4 @@ automation:
       - service: climate.set_fan_mode
         entity_id: climate.090615_cn_proxy_681594875_00004_ktf
         data:
-          fan_mode: 自动
+          fan_mode: "{{ target_fan }}"
