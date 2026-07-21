@@ -55,7 +55,7 @@
 
 - alias: 助手 - 耗电异常提醒
   id: alert_power_anomaly
-  description: 全屋功耗持续超过2000W达2小时，且至少一台空调开启时，推送耗电异常提醒
+  description: 全屋功耗持续超过2000W达2小时，且至少一台空调开启时，向中枢网关发送「耗电异常」虚拟事件
   mode: single
   trigger:
     - platform: numeric_state
@@ -82,21 +82,8 @@
               entity_id: climate.090615_cn_proxy_681594875_00004_ktf
               state: 'off'
   action:
-    - service: script.serverchan_push
+    - service: text.set_value
+      target:
+        entity_id: text.xiaomi_cn_1079257233_hub1_emit_virtual_event_a_4_1
       data:
-        title: 耗电异常
-        content: >
-          {% set power = states('sensor.pzem_004t_v3_power') %}
-          {% set ns = namespace(acs=[]) %}
-          {% if states('climate.090615_cn_proxy_681594875_00003_ktf') != 'off' %}
-            {% set ns.acs = ns.acs + ['主卧'] %}
-          {% endif %}
-          {% if states('climate.090615_cn_proxy_681594875_00002_ktf') != 'off' %}
-            {% set ns.acs = ns.acs + ['次卧'] %}
-          {% endif %}
-          {% if states('climate.090615_cn_proxy_681594875_00004_ktf') != 'off' %}
-            {% set ns.acs = ns.acs + ['客厅'] %}
-          {% endif %}
-
-          全屋功耗已持续超过 2000W 达 2 小时（当前 {{ power }} W）
-          当前开启空调：{{ ns.acs | join('、') if ns.acs else '无' }}
+        value: 耗电异常
