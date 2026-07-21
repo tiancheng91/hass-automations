@@ -1,6 +1,6 @@
 # 客厅空调自动化控制
 # 每30分钟检查一次，空调开启时维持目标温度与风量
-# 温度：白天目标28、夜间目标29；当前设定低于目标时每次只+1，达到后不再调整；高于目标不改
+# 温度：白天目标28、夜间目标29（室温<26时强制29）；当前设定低于目标时每次只+1，达到后不再调整；高于目标不改
 # 风量：白天自动；夜间低风；室温>=29°C 时临时高风加速降温
 # 无独立自动化开关，始终生效
 
@@ -9,9 +9,11 @@ automation:
     id: living_room_climate_maintain
     mode: single
     initial_state: true
+    trace:
+      stored_traces: 48
     description: >-
       每30分钟检查一次，仅在空调开启时执行。
-      温度目标：白天28°C、夜间29°C；若当前设定低于目标，每次只上调1°C，达到后不再改；高于目标不改。
+      温度目标：白天28°C、夜间29°C（室温<26°C 时强制29°C）；若当前设定低于目标，每次只上调1°C，达到后不再改；高于目标不改。
       风量：白天自动、夜间低风；室温>=29°C 时临时高风。
     trigger:
       - platform: time_pattern
@@ -28,7 +30,7 @@ automation:
           current_temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00004_ktf', 'current_temperature') | float(0) }}"
           setpoint: "{{ state_attr('climate.090615_cn_proxy_681594875_00004_ktf', 'temperature') | float(99) }}"
           is_hot: "{{ current_temp >= 29 }}"
-          target_temp: "{{ 28 if is_daytime else 29 }}"
+          target_temp: "{{ 29 if current_temp < 26 else (28 if is_daytime else 29) }}"
           next_temp: "{{ [setpoint + 1, target_temp] | min }}"
           target_fan: "{{ '高风' if is_hot else ('自动' if is_daytime else '低风') }}"
       - if:

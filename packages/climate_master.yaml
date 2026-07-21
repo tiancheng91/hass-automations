@@ -1,20 +1,59 @@
 # 主卧空调与风扇自动化控制
-# 空调模式与目标温度由人工在设备端设置，自动化仅 turn_on/turn_off
-# 受 input_boolean.hass_mode_master 控制
-
-input_boolean:
-  hass_mode_master:
-    name: 主卧自动化开关
-    icon: mdi:home-automation
+# 维持逻辑对齐客厅：白天目标28、夜间29（室温<26强制29），偏低每次+1；风量白天自动/夜间低风/室温>=29高风
+# 另保留：夜间22:00-06:00过热开空调、离家关空调与风扇、回家开风扇
+# 无独立自动化开关，始终生效
 
 automation:
+  - alias: 主卧 - 维持目标温度与风量
+    id: bedroom_climate_maintain
+    mode: single
+    initial_state: true
+    trace:
+      stored_traces: 48
+    description: >-
+      每30分钟检查一次，仅在空调开启时执行。
+      温度目标：白天28°C、夜间29°C（室温<26°C 时强制29°C）；若当前设定低于目标，每次只上调1°C，达到后不再改；高于目标不改。
+      风量：白天自动、夜间低风；室温>=29°C 时临时高风。
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+    condition:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+            state: 'off'
+    action:
+      - variables:
+          is_daytime: "{{ 10 <= now().hour < 21 }}"
+          current_temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00003_ktf', 'current_temperature') | float(0) }}"
+          setpoint: "{{ state_attr('climate.090615_cn_proxy_681594875_00003_ktf', 'temperature') | float(99) }}"
+          is_hot: "{{ current_temp >= 29 }}"
+          target_temp: "{{ 29 if current_temp < 26 else (28 if is_daytime else 29) }}"
+          next_temp: "{{ [setpoint + 1, target_temp] | min }}"
+          target_fan: "{{ '高风' if is_hot else ('自动' if is_daytime else '低风') }}"
+      - if:
+          - condition: template
+            value_template: "{{ setpoint < target_temp }}"
+        then:
+          - service: climate.set_temperature
+            entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+            data:
+              temperature: "{{ next_temp }}"
+      - service: climate.set_fan_mode
+        entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+        data:
+          fan_mode: "{{ target_fan }}"
+
   - alias: 主卧 - 温度高_开空调
     id: bedroom_climate_on
     mode: single
-    initial_state: true
+    initial_state: false
+    trace:
+      stored_traces: 48
     description: >-
-      每晚22:00至次日07:30且有人在家时，室温持续高于29°C达5分钟且空调为关闭状态时自动开空调；
-      不设置 hvac_mode/目标温度，沿用人工配置。
+      仅夜间22:00至次日06:00且有人在家时，室温持续高于29°C达5分钟且空调关闭时自动开空调；
+      其它时间由人工开启。
     trigger:
       - platform: numeric_state
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
@@ -24,14 +63,11 @@ automation:
           minutes: 5
     condition:
       - condition: state
-        entity_id: input_boolean.hass_mode_master
-        state: "on"
-      - condition: state
         entity_id: binary_sensor.home_state
         state: "on"
       - condition: time
         after: '22:00'
-        before: '07:30'
+        before: '06:00'
       - condition: state
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
         state: 'off'
@@ -39,49 +75,13 @@ automation:
       - service: climate.turn_on
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
 
-  - alias: 主卧 - 温度低_关空调
-    id: bedroom_climate_off
-    mode: single
-    initial_state: true
-    description: >-
-      凌晨01:00-08:00内，室温低于28°C且空调非关闭时关空调；不检查是否在家。
-      触发方式：(1) 温度持续低于28°C达10分钟；(2) 每天02:00检查，仅当当时温度仍低于28°C才关（非强制关机）。
-    trace:
-      stored_traces: 20
-    trigger:
-      - platform: numeric_state
-        entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-        attribute: current_temperature
-        below: 28
-        for:
-          minutes: 10
-      - platform: time
-        at: "02:00:00"
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_master
-        state: "on"
-      - condition: time
-        after: '01:00'
-        before: '08:00'
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-            state: 'off'
-      - condition: numeric_state
-        entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-        attribute: current_temperature
-        below: 28
-    action:
-      - service: climate.turn_off
-        entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-
   - alias: 主卧 - 关闭设备
     id: bedroom_turn_off_all
     mode: single
     initial_state: true
-    description: 离家状态（home_state 从 on 变为 off）持续10分钟后，关闭主卧空调与风扇。
+    trace:
+      stored_traces: 48
+    description: 离家状态持续10分钟后，关闭主卧空调与风扇。
     trigger:
       - platform: state
         entity_id: binary_sensor.home_state
@@ -89,79 +89,19 @@ automation:
         to: "off"
         for:
           minutes: 10
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_master
-        state: "on"
     action:
       - service: climate.turn_off
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
       - service: fan.turn_off
         entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
 
-  - alias: 主卧 - 动态调风速
-    id: bedroom_climate_fan_adjust
-    mode: single
-    initial_state: true
-    description: >-
-      空调开启状态下，根据室温动态调整风速：
-      >=31°C 高风，30-31°C 中风，29-30°C 低风，<29°C 自动风。
-      每5分钟检查一次。
-    trigger:
-      - platform: time_pattern
-        minutes: "/5"
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_master
-        state: "on"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-            state: 'off'
-    action:
-      - choose:
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                attribute: current_temperature
-                above: 31
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                data:
-                  fan_mode: 高风
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                attribute: current_temperature
-                above: 30
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                data:
-                  fan_mode: 中风
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                attribute: current_temperature
-                above: 29
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-                data:
-                  fan_mode: 低风
-        default:
-          - service: climate.set_fan_mode
-            entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-            data:
-              fan_mode: 自动
-
   - alias: 主卧 - 开启设备
     id: bedroom_turn_on
     mode: single
     initial_state: true
-    description: 回家状态（home_state 从 off 变为 on）持续5分钟且室温高于26°C时，开启主卧风扇（不自动开空调）。
+    trace:
+      stored_traces: 48
+    description: 回家状态持续5分钟且室温高于26°C时，开启主卧风扇。
     trigger:
       - platform: state
         entity_id: binary_sensor.home_state
@@ -170,9 +110,6 @@ automation:
         for:
           minutes: 5
     condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_master
-        state: "on"
       - condition: numeric_state
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
         attribute: current_temperature

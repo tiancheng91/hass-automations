@@ -1,30 +1,72 @@
 # 次卧（婴儿房）空调自动化控制
-# 全天候运行，温度高开空调(28°C)、温度低关空调(26°C)、动态调风速
-# 受 input_boolean.hass_mode_baby 控制
-
-input_boolean:
-  hass_mode_baby:
-    name: 次卧自动化开关
-    icon: mdi:home-automation
+# 维持逻辑对齐客厅：白天目标28、夜间29（室温<26强制29），偏低每次+1；风量白天自动/夜间低风/室温>=29高风
+# 另保留：夜间22:00-06:00且室温>30辅助开、离家关空调
+# 无独立自动化开关，始终生效
 
 automation:
+  - alias: 次卧 - 维持目标温度与风量
+    id: baby_room_climate_maintain
+    mode: single
+    initial_state: true
+    trace:
+      stored_traces: 48
+    description: >-
+      每30分钟检查一次，仅在空调开启时执行。
+      温度目标：白天28°C、夜间29°C（室温<26°C 时强制29°C）；若当前设定低于目标，每次只上调1°C，达到后不再改；高于目标不改。
+      风量：白天自动、夜间低风；室温>=29°C 时临时高风。
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+    condition:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+            state: 'off'
+    action:
+      - variables:
+          is_daytime: "{{ 10 <= now().hour < 21 }}"
+          current_temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00002_ktf', 'current_temperature') | float(0) }}"
+          setpoint: "{{ state_attr('climate.090615_cn_proxy_681594875_00002_ktf', 'temperature') | float(99) }}"
+          is_hot: "{{ current_temp >= 29 }}"
+          target_temp: "{{ 29 if current_temp < 26 else (28 if is_daytime else 29) }}"
+          next_temp: "{{ [setpoint + 1, target_temp] | min }}"
+          target_fan: "{{ '高风' if is_hot else ('自动' if is_daytime else '低风') }}"
+      - if:
+          - condition: template
+            value_template: "{{ setpoint < target_temp }}"
+        then:
+          - service: climate.set_temperature
+            entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+            data:
+              temperature: "{{ next_temp }}"
+      - service: climate.set_fan_mode
+        entity_id: climate.090615_cn_proxy_681594875_00002_ktf
+        data:
+          fan_mode: "{{ target_fan }}"
+
   - alias: 次卧 - 温度高_开空调
     id: baby_room_climate_on
     mode: single
-    initial_state: true
+    initial_state: false
+    trace:
+      stored_traces: 48
     description: >-
-      全天候运行，室温持续高于28°C达5分钟且空调为关闭状态时自动开空调，
-      默认设为cool模式27°C、自动风，随后根据温差动态调整风速。
+      辅助自动开：仅夜间22:00-06:00、有人在家且室温持续高于30°C达30分钟、空调关闭时才开，
+      设为cool模式；其它时间由人工开启。
     trigger:
       - platform: numeric_state
         entity_id: climate.090615_cn_proxy_681594875_00002_ktf
         attribute: current_temperature
-        above: 28
+        above: 30
         for:
-          minutes: 5
+          minutes: 30
     condition:
+      - condition: time
+        after: '22:00'
+        before: '06:00'
       - condition: state
-        entity_id: input_boolean.hass_mode_baby
+        entity_id: binary_sensor.home_state
         state: "on"
       - condition: state
         entity_id: climate.090615_cn_proxy_681594875_00002_ktf
@@ -42,100 +84,12 @@ automation:
         data:
           fan_mode: 自动
 
-  - alias: 次卧 - 温度低_关空调
-    id: baby_room_climate_off
-    mode: single
-    initial_state: true
-    description: >-
-      全天候运行，室温持续低于26°C达10分钟且空调非关闭状态时关空调。
-    trace:
-      stored_traces: 20
-    trigger:
-      - platform: numeric_state
-        entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-        attribute: current_temperature
-        below: 26
-        for:
-          minutes: 10
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_baby
-        state: "on"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-            state: 'off'
-      - condition: numeric_state
-        entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-        attribute: current_temperature
-        below: 26
-    action:
-      - service: climate.turn_off
-        entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-
-  - alias: 次卧 - 动态调风速
-    id: baby_room_climate_fan_adjust
-    mode: single
-    initial_state: true
-    description: >-
-      空调开启状态下，根据室温动态调整风速：
-      >=30°C 高风，29-30°C 中风，28-29°C 低风，<28°C 自动风。
-      每5分钟检查一次。
-    trigger:
-      - platform: time_pattern
-        minutes: "/5"
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_baby
-        state: "on"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-            state: 'off'
-    action:
-      - choose:
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                attribute: current_temperature
-                above: 30
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                data:
-                  fan_mode: 高风
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                attribute: current_temperature
-                above: 29
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                data:
-                  fan_mode: 中风
-          - conditions:
-              - condition: numeric_state
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                attribute: current_temperature
-                above: 28
-            sequence:
-              - service: climate.set_fan_mode
-                entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-                data:
-                  fan_mode: 低风
-        default:
-          - service: climate.set_fan_mode
-            entity_id: climate.090615_cn_proxy_681594875_00002_ktf
-            data:
-              fan_mode: 自动
-
   - alias: 次卧 - 关闭设备
     id: baby_room_turn_off_all
     mode: single
     initial_state: true
+    trace:
+      stored_traces: 48
     description: 离家状态持续10分钟后，关闭次卧空调。
     trigger:
       - platform: state
@@ -144,10 +98,6 @@ automation:
         to: "off"
         for:
           minutes: 10
-    condition:
-      - condition: state
-        entity_id: input_boolean.hass_mode_baby
-        state: "on"
     action:
       - service: climate.turn_off
         entity_id: climate.090615_cn_proxy_681594875_00002_ktf
