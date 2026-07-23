@@ -1,52 +1,49 @@
-# 主卧风扇 - 作为空调的温度补充
-# 仅依据当前室温调速；空调开启后若降温有效，温度下降会自然带来风扇降档
+# 主卧风扇 - 按在家状态与室温自动控制开关与转速
+# 仅使用空调上报的当前室温，与空调开关/设定温度无关
 
-- alias: 主卧 - 风扇转速自动调节
+- alias: 主卧 - 风扇自动控制
   id: bedroom_fan_level
   mode: single
   initial_state: true
   description: >-
-    每晚21:00至次日08:00且有人在家时，根据 climate 当前室温自动调节风扇转速（与空调开关无关）。
-    26°C起逐步加强，≥29°C加大风量；转速≤5时自动关风扇。
+    无人在家时关闭风扇；有人在家且室温≥26°C时开启并按室温调速；
+    室温<26°C时关闭。不依赖空调开关与设定温度。
     执行前检查风扇开关与当前转速，已与目标一致则跳过，避免重复调用。
-  triggers:
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.home_state
     - platform: state
       entity_id: climate.090615_cn_proxy_681594875_00003_ktf
       attribute: current_temperature
       for: "00:05:00"
-  conditions:
-    - condition: state
-      entity_id: binary_sensor.home_state
-      state: "on"
-    - condition: time
-      after: "21:00:00"
-      before: "08:00:00"
-  actions:
+  action:
     - variables:
-        fan_speed: >
-          {% set t = state_attr('climate.090615_cn_proxy_681594875_00003_ktf', 'current_temperature') | float(0) %}
-          {% if t >= 31 %}90
-          {% elif t >= 30 %}60
-          {% elif t >= 29 %}40
-          {% elif t >= 28 %}25
-          {% elif t >= 27 %}15
-          {% elif t >= 26 %}10
-          {% else %}5
-          {% endif %}
-        target_speed: "{{ fan_speed | int(0) }}"
+        home: "{{ is_state('binary_sensor.home_state', 'on') }}"
+        temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00003_ktf', 'current_temperature') | float(0) }}"
+        target_speed: >
+          {% set levels = [
+            {'min': 31, 'speed': 90},
+            {'min': 30, 'speed': 60},
+            {'min': 29, 'speed': 40},
+            {'min': 28, 'speed': 25},
+            {'min': 27, 'speed': 15},
+            {'min': 26, 'speed': 10},
+          ] %}
+          {{ (levels | selectattr('min', 'le', temp | float(0)) | map(attribute='speed') | first) | default(0) | int }}
         current_speed: "{{ states('number.dmaker_cn_659430584_p5c_speed_level_p_8_1') | int(-1) }}"
         fan_is_off: "{{ is_state('fan.dmaker_cn_659430584_p5c_s_2_fan', 'off') }}"
+        should_run: "{{ home and temp >= 26 }}"
     - choose:
         - conditions:
             - condition: template
-              value_template: "{{ target_speed <= 5 and not fan_is_off }}"
+              value_template: "{{ not should_run and not fan_is_off }}"
           sequence:
             - service: fan.turn_off
               target:
                 entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
         - conditions:
             - condition: template
-              value_template: "{{ target_speed > 5 and (fan_is_off or current_speed != target_speed) }}"
+              value_template: "{{ should_run and (fan_is_off or current_speed != target_speed) }}"
           sequence:
             - if:
                 - condition: template

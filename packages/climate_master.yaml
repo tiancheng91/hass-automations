@@ -1,6 +1,6 @@
-# 主卧空调与风扇自动化控制
+# 主卧空调自动化控制（风扇由 automations/device_fan.yaml 独立控制）
 # 维持逻辑对齐客厅：白天目标28、夜间29（室温<26强制29），偏低每次+1；风量白天自动/夜间低风/室温>=29高风
-# 另保留：夜间22:00-06:00过热开空调、离家关空调与风扇、回家开风扇
+# 另保留：夜间22:00-06:00过热开空调、离家关空调
 # 无独立自动化开关，始终生效
 
 automation:
@@ -75,13 +75,13 @@ automation:
       - service: climate.turn_on
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
 
-  - alias: 主卧 - 关闭设备
+  - alias: 主卧 - 关闭空调
     id: bedroom_turn_off_all
     mode: single
     initial_state: true
     trace:
       stored_traces: 48
-    description: 离家状态持续10分钟后，关闭主卧空调与风扇。
+    description: 离家状态持续10分钟后，关闭主卧空调。风扇由 device_fan 自动化独立处理。
     trigger:
       - platform: state
         entity_id: binary_sensor.home_state
@@ -92,28 +92,3 @@ automation:
     action:
       - service: climate.turn_off
         entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-      - service: fan.turn_off
-        entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
-
-  - alias: 主卧 - 开启设备
-    id: bedroom_turn_on
-    mode: single
-    initial_state: true
-    trace:
-      stored_traces: 48
-    description: 回家状态持续5分钟且室温高于26°C时，开启主卧风扇。
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.home_state
-        from: "off"
-        to: "on"
-        for:
-          minutes: 5
-    condition:
-      - condition: numeric_state
-        entity_id: climate.090615_cn_proxy_681594875_00003_ktf
-        attribute: current_temperature
-        above: 26
-    action:
-      - service: fan.turn_on
-        entity_id: fan.dmaker_cn_659430584_p5c_s_2_fan
