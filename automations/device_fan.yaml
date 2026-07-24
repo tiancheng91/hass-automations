@@ -13,13 +13,13 @@
     - platform: state
       entity_id: binary_sensor.home_state
     - platform: state
-      entity_id: climate.090615_cn_proxy_681594875_00003_ktf
+      entity_id: climate.090615_cn_proxy_681594875_00002_ktf
       attribute: current_temperature
       for: "00:05:00"
   action:
     - variables:
         home: "{{ is_state('binary_sensor.home_state', 'on') }}"
-        temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00003_ktf', 'current_temperature') | float(0) }}"
+        temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00002_ktf', 'current_temperature') | float(0) }}"
         target_speed: >
           {% set levels = [
             {'min': 31, 'speed': 90},
