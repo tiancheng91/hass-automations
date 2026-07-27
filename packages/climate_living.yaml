@@ -26,7 +26,7 @@ automation:
             state: 'off'
     action:
       - variables:
-          is_daytime: "{{ 10 <= now().hour < 21 }}"
+          is_daytime: "{{ 10 <= now().hour < 23 }}"
           current_temp: "{{ state_attr('climate.090615_cn_proxy_681594875_00004_ktf', 'current_temperature') | float(0) }}"
           setpoint: "{{ state_attr('climate.090615_cn_proxy_681594875_00004_ktf', 'temperature') | float(99) }}"
           is_hot: "{{ current_temp >= 29 }}"
