@@ -23,9 +23,9 @@
         target_speed: >
           {% set levels = [
             {'min': 31, 'speed': 90},
-            {'min': 30, 'speed': 60},
-            {'min': 29, 'speed': 40},
-            {'min': 28, 'speed': 25},
+            {'min': 30, 'speed': 65},
+            {'min': 29, 'speed': 50},
+            {'min': 28, 'speed': 30},
             {'min': 27, 'speed': 15},
             {'min': 26, 'speed': 10},
           ] %}
