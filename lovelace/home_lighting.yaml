@@ -11,7 +11,10 @@ views:
             icon: mdi:sofa-outline
           - type: tile
             entity: switch.lumi_cn_551288517_acn032_on_p_2_1
-            name: 客厅 S1E 左键 · 主灯
+            name: 客厅米家主灯 · S1E 电源
+            grid_options:
+              columns: full
+              rows: auto
             color: primary
             card_mod: &lamp_surface
               style: |
@@ -30,6 +33,31 @@ views:
             features:
               - type: toggle
           - type: tile
+            entity: light.ftd_cn_1087033247_ftdlmp_s_2_light
+            name: 主灯亮度与颜色
+            grid_options:
+              columns: full
+              rows: auto
+            color: primary
+            card_mod: *lamp_surface
+            visibility:
+              - condition: state
+                entity: switch.lumi_cn_551288517_acn032_on_p_2_1
+                state: "on"
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+            hold_action:
+              action: none
+            double_tap_action:
+              action: none
+            features:
+              - type: light-brightness
+              - type: light-color
+                controls: hue_saturation
+              - type: light-color-temp
+          - type: tile
             entity: switch.lumi_cn_551288517_acn032_on_p_3_1
             name: 客厅 S1E 中键 · 筒灯
             color: primary
@@ -47,22 +75,6 @@ views:
               action: toggle
             features:
               - type: toggle
-          - type: tile
-            entity: light.ftd_cn_1087033247_ftdlmp_s_2_light
-            name: 客厅 米家主灯
-            grid_options:
-              columns: full
-              rows: auto
-            color: primary
-            card_mod: *lamp_surface
-            icon_tap_action:
-              action: toggle
-            features:
-              - type: toggle
-              - type: light-brightness
-              - type: light-color
-                controls: hue_saturation
-              - type: light-color-temp
           - type: tile
             entity: light.hyd_cn_672580633_pro2_s_3_light
             name: 客厅 晾衣机灯
