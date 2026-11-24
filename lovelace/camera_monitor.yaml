@@ -98,6 +98,8 @@ views:
                 {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | rejectattr('name', 'search', '巡航')
+                   | rejectattr('entity_id', 'search', 'cruise')
                    | sort(attribute='entity_id') %}
                   {% set label = item.name.removeprefix(prefix)
                      | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
@@ -174,6 +176,8 @@ views:
                 {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | rejectattr('name', 'search', '巡航')
+                   | rejectattr('entity_id', 'search', 'cruise')
                    | sort(attribute='entity_id') %}
                   {% set label = item.name.removeprefix(prefix)
                      | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
@@ -244,6 +248,8 @@ views:
                 {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | rejectattr('name', 'search', '巡航')
+                   | rejectattr('entity_id', 'search', 'cruise')
                    | sort(attribute='entity_id') %}
                   {% set label = item.name.removeprefix(prefix)
                      | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
@@ -314,6 +320,8 @@ views:
                 {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | rejectattr('name', 'search', '巡航')
+                   | rejectattr('entity_id', 'search', 'cruise')
                    | sort(attribute='entity_id') %}
                   {% set label = item.name.removeprefix(prefix)
                      | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
