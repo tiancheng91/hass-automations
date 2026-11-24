@@ -186,7 +186,7 @@ cp secrets.yaml.example secrets.yaml
 
 ## 仪表盘面板
 
-- **监控** — 使用 WebRTC 显示客厅、书房小方、次卧、阳台小方。将 `packages/camera_monitor.yaml` 和 `lovelace/camera_monitor.yaml` 按目录放入 HA 配置目录，按上例加载 package（已通过 `!include_dir_named packages` 加载的可跳过），检查配置并重启后打开侧栏的「监控」。若手动管理 YAML 前端资源，请将 `/webrtc/webrtc-camera.js` 加入资源列表，类型为 `module`。
+- **监控** — 默认播放客厅，点击画面上的摄像头名称可切换到书房小方、次卧或阳台小方，每次显示一路。将 `packages/camera_monitor.yaml` 和 `lovelace/camera_monitor.yaml` 按目录放入 HA 配置目录，按上例加载 package（已通过 `!include_dir_named packages` 加载的可跳过），检查配置并重启后打开侧栏的「监控」。若手动管理 YAML 前端资源，请将 `/webrtc/webrtc-camera.js` 加入资源列表，类型为 `module`。
 
 - **婴儿护理面板** — 喂奶/换尿布记录操作面板，含 24h 喂养间隔图表
 - **环境温度控制面板** — 主卧/次卧自动化开关，空调风扇状态，24h 温度趋势图
