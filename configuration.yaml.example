@@ -29,6 +29,7 @@
 # homeassistant:
 #   packages:
 #     baby_feeding: !include packages/baby_feeding.yaml
+#     camera_monitor: !include packages/camera_monitor.yaml
 #
 # ============================================
 # 注意事项：

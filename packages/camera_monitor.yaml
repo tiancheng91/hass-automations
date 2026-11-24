@@ -1,0 +1,8 @@
+lovelace:
+  dashboards:
+    camera-monitor:
+      mode: yaml
+      filename: lovelace/camera_monitor.yaml
+      title: 监控
+      icon: mdi:cctv
+      show_in_sidebar: true

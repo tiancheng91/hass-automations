@@ -1,0 +1,46 @@
+views:
+  - title: 监控
+    path: live
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: custom:webrtc-camera
+            title: 客厅
+            url: micam00
+            muted: true
+            ui: true
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        cards:
+          - type: custom:webrtc-camera
+            title: 书房小方
+            url: micam01
+            muted: true
+            ui: true
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        cards:
+          - type: custom:webrtc-camera
+            title: 次卧
+            url: micam02
+            muted: true
+            ui: true
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        cards:
+          - type: custom:webrtc-camera
+            title: 阳台小方
+            url: micam03
+            muted: true
+            ui: true
+            grid_options:
+              columns: full
+              rows: auto
