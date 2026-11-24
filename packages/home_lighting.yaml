@@ -1,0 +1,8 @@
+lovelace:
+  dashboards:
+    home-lighting:
+      mode: yaml
+      filename: lovelace/home_lighting.yaml
+      title: 灯光
+      icon: mdi:lightbulb-group
+      show_in_sidebar: true

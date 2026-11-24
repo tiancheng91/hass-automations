@@ -1,0 +1,203 @@
+views:
+  - title: 网关
+    path: overview
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 网络拓扑
+            icon: mdi:lan-connect
+          - type: markdown
+            grid_options:
+              columns: full
+              rows: auto
+            content: |
+              ~~~text
+              光猫
+              └─ 水星路由  192.168.0.1
+                 ├─ AP  192.168.0.2
+                 ├─ N1 旁路由  192.168.0.10
+                 │  └─ Tailscale  100.64.0.10
+                 │     └─ phx01  100.64.1.2
+                 │        └─ phx10  10.0.10.10
+                 └─ M4 mini  192.168.0.9
+              ~~~
+            card_mod:
+              style: |
+                ha-card { border-inline-start: 3px solid var(--primary-color); }
+      - type: grid
+        cards:
+          - type: heading
+            heading: MR108GP-AC
+            icon: mdi:router-network
+          - type: custom:auto-entities
+            grid_options:
+              columns: full
+            show_empty: true
+            card:
+              type: entities
+              title: 网关遥测
+              show_header_toggle: false
+            filter:
+              include:
+                - entity_id: sensor.mercury_smb*
+            sort:
+              method: name
+            else:
+              type: markdown
+              content: 当前没有匹配的 Mercury SMB 传感器。
+          - type: markdown
+            title: 节点 Ping
+            grid_options:
+              columns: full
+              rows: auto
+            content: |
+              {% set rows = state_attr('sensor.home_network_ping', 'result') or [] %}
+              {% if not has_value('sensor.home_network_ping') or not rows %}
+              暂无探测数据
+              {% else %}
+              {% set names = {'192.168.0.1':'水星路由','192.168.0.9':'M4 mini','10.0.10.2':'phx01','10.0.10.10':'phx10','1.0.0.1':'Cloudflare DNS'} %}
+              | 探测目标 | 状态 | 延迟 | 丢包 |
+              | :--- | :--- | ---: | ---: |
+              {% for ip, samples in rows | groupby('metric.url') -%}
+              {% set ns = namespace(code=none, ms=none, loss=none) -%}
+              {% for sample in samples -%}
+              {% set val = sample.value[1] | float(none) -%}
+              {% if is_number(val) -%}
+              {% if sample.metric['__name__'] == 'ping_result_code' %}{% set ns.code = val %}{% endif -%}
+              {% if sample.metric['__name__'] == 'ping_average_response_ms' %}{% set ns.ms = val %}{% endif -%}
+              {% if sample.metric['__name__'] == 'ping_percent_packet_loss' %}{% set ns.loss = val %}{% endif -%}
+              {% endif -%}
+              {% endfor -%}
+              | {{ names.get(ip, ip) }} | {{ '—' if ns.code is none else '在线' if ns.code == 0 else '不可达' }} | {{ (ns.ms | round(2) ~ ' ms') if ns.ms is not none else '—' }} | {{ (ns.loss | round(1) ~ '%') if ns.loss is not none else '—' }} |
+              {% endfor %}
+              {% endif %}
+          - type: heading
+            heading: Grafana 监控
+            icon: mdi:chart-line
+          - type: button
+            name: Ping · 最近 6 小时
+            icon: mdi:pulse
+            icon_height: 28px
+            tap_action:
+              action: url
+              url_path: 'https://console.appsvc.net/grafana/d/tin79zv/-ping?from=now-6h&to=now&timezone=browser'
+          - type: button
+            name: N1 旁路由 · 主机指标
+            icon: mdi:server
+            icon_height: 28px
+            tap_action:
+              action: url
+              url_path: 'https://console.appsvc.net/grafana/d/node-exporter/node-exporter-full?from=now-5m&to=now&timezone=browser&var-datasource=default&var-job=node_exporter&var-node=192.168.0.10:9100&var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&refresh=30s'
+          - type: button
+            name: Mihomo · 代理流量
+            icon: mdi:swap-vertical
+            icon_height: 28px
+            tap_action:
+              action: url
+              url_path: 'https://console.appsvc.net/grafana/d/adsxzpf/mihomo-exporter-e79b91-e68ea7-v2?from=now-15m&to=now&timezone=browser&var-datasource=PA396B7035A9690C9&var-node=$__all&refresh=30s'
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 静态地址分配
+            icon: mdi:lan
+          - type: markdown
+            title: 网络设备
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('AP', '192.168.0.2'), ('AP-IoT', '192.168.0.3')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}
+          - type: markdown
+            title: 计算与移动设备
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('N1 旁路由（Arch Linux）', '192.168.0.10'), ('M4 mini', '192.168.0.9'), ('K70E', '192.168.0.200')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}
+          - type: markdown
+            title: 摄像头
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('客厅', '192.168.0.36'), ('书房小方', '192.168.0.35'), ('次卧', '192.168.0.37'), ('阳台小方', '192.168.0.38')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}
+          - type: markdown
+            title: 家电与语音
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('冰箱', '192.168.0.31'), ('洗衣机 D9', '192.168.0.32'), ('洗碗机 E1', '192.168.0.33'), ('扫地机 S1', '192.168.0.34'), ('小爱音箱', '192.168.0.21')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}
+          - type: markdown
+            title: 打印与制作
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('Brother', '192.168.0.20'), ('A1 mini', '192.168.0.22'), ('A1 AMS', '192.168.0.23')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}
+          - type: markdown
+            title: 影音与游戏
+            grid_options:
+              columns: 12
+              rows: auto
+            content: |
+              {% set nodes = [('电视', '192.168.0.60'), ('Quest 2', '192.168.0.40'), ('PS5', '192.168.0.50')] %}
+              {% set trackers = states.device_tracker | selectattr('attributes.source_type', 'defined')
+                 | selectattr('attributes.source_type', 'eq', 'router')
+                 | selectattr('attributes.ip', 'defined') | list %}
+              | 设备 | 保留地址 | 路由跟踪 |
+              | :--- | :--- | :--- |
+              {% for label, ip in nodes -%}
+              {% set states_at_ip = trackers | selectattr('attributes.ip', 'eq', ip) | map(attribute='state') | list -%}
+              | {{ label }} | `{{ ip }}` | {{ '在线' if 'home' in states_at_ip else '离线' if states_at_ip and states_at_ip | reject('eq', 'not_home') | list | length == 0 else '未确认' }} |
+              {% endfor %}

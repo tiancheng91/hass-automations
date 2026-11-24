@@ -1,0 +1,26 @@
+lovelace:
+  dashboards:
+    home-network:
+      mode: yaml
+      filename: lovelace/home_network.yaml
+      title: 网关
+      icon: mdi:lan
+      show_in_sidebar: true
+
+rest:
+  - resource: https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/api/v1/query
+    authentication: basic
+    username: !secret grafana_prometheus_user
+    password: !secret grafana_prometheus_token
+    scan_interval: 60
+    timeout: 15
+    params:
+      query: '{__name__=~"ping_result_code|ping_average_response_ms|ping_percent_packet_loss",url!=""}'
+    sensor:
+      - name: Home Network Ping
+        unique_id: home_network_prometheus_ping
+        availability: "{{ value_json is defined and value_json.status | default('') == 'success' }}"
+        value_template: "{{ value_json.data.result | length }}"
+        json_attributes_path: "$.data"
+        json_attributes:
+          - result

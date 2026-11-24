@@ -30,6 +30,8 @@
 #   packages:
 #     baby_feeding: !include packages/baby_feeding.yaml
 #     camera_monitor: !include packages/camera_monitor.yaml
+#     home_lighting: !include packages/home_lighting.yaml
+#     home_network: !include packages/home_network.yaml
 #
 # ============================================
 # 注意事项：
