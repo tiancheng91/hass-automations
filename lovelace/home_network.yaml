@@ -10,24 +10,78 @@ views:
           - type: heading
             heading: 网络拓扑
             icon: mdi:lan-connect
-          - type: markdown
+          - type: custom:button-card
+            entity: sensor.home_network_ping
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
             grid_options:
               columns: full
               rows: auto
-            content: |
-              ~~~text
-              光猫
-              └─ 水星路由  192.168.0.1
-                 ├─ AP  192.168.0.2
-                 ├─ N1 旁路由  192.168.0.10
-                 │  └─ Tailscale  100.64.0.10
-                 │     └─ phx01  100.64.1.2
-                 │        └─ phx10  10.0.10.10
-                 └─ M4 mini  192.168.0.9
-              ~~~
-            card_mod:
-              style: |
-                ha-card { border-inline-start: 3px solid var(--primary-color); }
+            styles:
+              card:
+                - border-radius: 0
+                - box-shadow: none
+                - padding: clamp(12px, 3vw, 28px)
+                - text-align: start
+              grid:
+                - grid-template-areas: '"map"'
+                - grid-template-columns: minmax(0, 1fr)
+            custom_fields:
+              map: |
+                [[[
+                  const samples = entity && !['unknown', 'unavailable'].includes(entity.state)
+                    ? entity.attributes.result || [] : [];
+                  const metric = (ip, name) => {
+                    const sample = samples.find(s => s.metric.url === ip && s.metric.__name__ === name);
+                    const n = Number(sample?.value?.[1]);
+                    return Number.isFinite(n) ? n : null;
+                  };
+                  const phx10 = {name: 'phx10', ip: '10.0.10.10', probe: '10.0.10.10'};
+                  const phx01 = {name: 'phx01', ip: '100.64.1.2', probe: '10.0.10.2', children: [phx10]};
+                  const tunnel = {name: 'Tailscale', ip: '100.64.0.10', children: [phx01]};
+                  const router = {name: '水星路由', ip: '192.168.0.1', probe: '192.168.0.1', children: [
+                    {name: 'AP', ip: '192.168.0.2'},
+                    {name: 'M4 mini', ip: '192.168.0.9', probe: '192.168.0.9'},
+                    {name: 'N1 旁路由', ip: '192.168.0.10', children: [tunnel]}
+                  ]};
+                  function station(node) {
+                    const code = metric(node.probe, 'ping_result_code');
+                    const ms = metric(node.probe, 'ping_average_response_ms');
+                    const tone = code === null ? 'idle' : code === 0 ? 'up' : 'down';
+                    const status = code === null ? (node.probe ? '暂无数据' : '未探测')
+                      : code !== 0 ? '不可达' : ms === null ? '在线' : ms.toFixed(1) + ' ms';
+                    const probe = node.probe && node.probe !== node.ip ? ' · 探测 ' + node.probe : '';
+                    return '<li><div class="station ' + tone + '"><div><strong>' + node.name +
+                      '</strong><small>' + (node.ip || '') + probe + '</small></div><em>' + status +
+                      '</em></div>' + (node.children ? '<ul>' + node.children.map(station).join('') +
+                      '</ul>' : '') + '</li>';
+                  }
+                  return '<ul class="rail">' + station({name: '光猫', children: [router]}) + '</ul>';
+                ]]]
+            extra_styles: |
+              .rail, .rail ul { list-style: none; margin: 0; padding: 0; }
+              .rail { --track: var(--divider-color); text-align: start; white-space: normal; }
+              .rail ul { margin-inline-start: clamp(7px, 1.4vw, 18px); }
+              .rail li { position: relative; padding-inline-start: 12px; }
+              .rail li::before, .rail li::after { content: ""; position: absolute; left: 0; }
+              .rail li::before { top: 0; bottom: 0; border-left: 2px solid var(--track); }
+              .rail li:last-child::before { height: 22px; }
+              .rail li::after { top: 21px; width: 12px; border-top: 2px solid var(--track); }
+              .rail > li { padding: 0; }
+              .rail > li::before, .rail > li::after { display: none; }
+              .station { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                padding: 6px 10px; min-height: 32px; border-bottom: 1px solid var(--track); }
+              .station strong, .station small { display: block; }
+              .station strong { font-size: 15px; }
+              .station small, .station em { color: var(--secondary-text-color); font-size: 12px;
+                font-style: normal; font-variant-numeric: tabular-nums; }
+              .station em { white-space: nowrap; }
+              .station.up em { color: var(--success-color); }
+              .station.down { border-inline-end: 4px solid var(--error-color); }
+              .station.down em { color: var(--error-color); }
       - type: grid
         cards:
           - type: heading
@@ -99,6 +153,11 @@ views:
             tap_action:
               action: url
               url_path: 'https://console.appsvc.net/grafana/d/adsxzpf/mihomo-exporter-e79b91-e68ea7-v2?from=now-15m&to=now&timezone=browser&var-datasource=PA396B7035A9690C9&var-node=$__all&refresh=30s'
+  - title: 地址簿
+    path: addresses
+    type: sections
+    max_columns: 2
+    sections:
       - type: grid
         column_span: 2
         cards:

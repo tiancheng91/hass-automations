@@ -188,8 +188,8 @@ cp secrets.yaml.example secrets.yaml
 
 ## 仪表盘面板
 
-- **灯光**（`/home-lighting/rooms`）— 按五个房间展示自动化中使用的照明回路和灯具。点图标切换，书房灯带、卫生间筒灯组可直接调光；其余 HA 灯光实体自动列入「其他灯光实体」。
-- **网关**（`/home-network/overview`）— 顶部展示光猫、水星路由、AP、N1 旁路由、Tailscale 远端链路和 M4 mini。下方及侧栏显示匹配的 Mercury SMB 传感器、三个 Grafana 仪表盘入口和 20 条 DHCP 保留地址。在线状态取自 HA 中 IP 匹配的路由跟踪实体，无匹配数据时显示「未确认」。其余终端的 AP 归属待关联表确认。
+- **灯光**（`/home-lighting/rooms`）— 按五个房间展示自动化中使用的照明回路和灯具。包含 4 个灯具实体和 7 个开关控制的照明回路。点图标切换，书房灯带、卫生间筒灯组可直接调光。
+- **网关**（`/home-network/overview`）— 顶部展示光猫、水星路由、AP、N1 旁路由、Tailscale 远端链路和 M4 mini。线路图按 Prometheus 探测结果标注延迟、不可达或暂无数据，未配置探测的节点显示「未探测」。侧栏显示网关遥测、Ping 明细和 Grafana 入口，独立的「地址簿」收录 20 条 DHCP 保留地址。在线状态取自 HA 中 IP 匹配的路由跟踪实体，无匹配数据时显示「未确认」。其余终端的 AP 归属待关联表确认。
 
 网关面板每 60 秒从 Grafana Cloud Prometheus 读取 Telegraf Ping 状态、延迟和丢包率。启用前在 HA 配置目录的 `secrets.yaml` 填入 `grafana_prometheus_user` 与 `grafana_prometheus_token`，参见 `secrets.yaml.example`。phx01 的探测目标是 10.0.10.2，拓扑中的 Tailscale 地址是 100.64.1.2。
 

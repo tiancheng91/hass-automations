@@ -39,6 +39,7 @@ button_card_templates:
         styles:
           card:
             - border-inline-start: 4px solid var(--primary-color)
+            - background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color))
           state:
             - color: var(--primary-color)
 
@@ -68,6 +69,17 @@ views:
                 margin-inline: auto;
                 overflow: hidden;
                 background: #101820;
+                border-radius: 0;
+                border-block-end: 3px solid var(--primary-color);
+                box-sizing: border-box;
+              }
+              .mode {
+                background: rgba(12, 17, 24, .82);
+                color: white;
+                padding: 3px 8px;
+                font: 600 12px/1.4 monospace;
+                letter-spacing: .06em;
+                opacity: 1;
               }
               video {
                 display: block;
