@@ -1,24 +1,50 @@
 views:
-  - title: 监控
+  - title: 客厅
     path: live
-    type: sections
-    max_columns: 1
-    sections:
-      - type: grid
-        cards:
-          - type: custom:webrtc-camera
-            ui: true
-            muted: true
-            # 首次加载播放第一路，点击画面上的名称可切换摄像头。
-            streams:
-              - name: 客厅
-                url: micam00
-              - name: 书房小方
-                url: micam01
-              - name: 次卧
-                url: micam02
-              - name: 阳台小方
-                url: micam03
-            grid_options:
-              columns: full
-              rows: auto
+    type: panel
+    cards:
+      - type: custom:webrtc-camera
+        url: micam00
+        ui: true
+        muted: true
+        style: &player_style |
+          ha-card {
+            display: block;
+            width: min(100%, 1440px);
+            height: auto;
+            margin: 0 auto;
+          }
+          video {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: calc(100dvh - 72px);
+            object-fit: contain;
+          }
+  - title: 书房小方
+    path: study
+    type: panel
+    cards:
+      - type: custom:webrtc-camera
+        url: micam01
+        ui: true
+        muted: true
+        style: *player_style
+  - title: 次卧
+    path: bedroom
+    type: panel
+    cards:
+      - type: custom:webrtc-camera
+        url: micam02
+        ui: true
+        muted: true
+        style: *player_style
+  - title: 阳台小方
+    path: balcony
+    type: panel
+    cards:
+      - type: custom:webrtc-camera
+        url: micam03
+        ui: true
+        muted: true
+        style: *player_style
