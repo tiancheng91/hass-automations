@@ -49,13 +49,20 @@ views:
               - type: toggle
           - type: tile
             entity: light.ftd_cn_1087033247_ftdlmp_s_2_light
-            name: 客厅 主灯模式
+            name: 客厅 米家主灯
+            grid_options:
+              columns: full
+              rows: auto
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
             features:
               - type: toggle
+              - type: light-brightness
+              - type: light-color
+                controls: hue_saturation
+              - type: light-color-temp
           - type: tile
             entity: light.hyd_cn_672580633_pro2_s_3_light
             name: 客厅 晾衣机灯
