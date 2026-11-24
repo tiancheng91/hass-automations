@@ -1,191 +1,294 @@
+button_card_templates:
+  camera_status:
+    show_state: true
+    show_icon: false
+    tap_action:
+      action: more-info
+    styles:
+      card:
+        - border-radius: 0
+        - box-shadow: none
+        - padding: 14px 16px
+        - text-align: left
+        - background: var(--ha-card-background, var(--card-background-color))
+      grid:
+        - grid-template-areas: '"s" "n"'
+        - grid-template-columns: minmax(0, 1fr)
+        - gap: 6px
+      state:
+        - justify-self: start
+        - max-width: 100%
+        - font-size: clamp(20px, 2vw, 30px)
+        - line-height: 1.2
+        - font-weight: 500
+        - font-variant-numeric: tabular-nums
+      name:
+        - justify-self: start
+        - max-width: 100%
+        - font-size: 13px
+        - color: var(--secondary-text-color)
+    state:
+      - operator: template
+        value: >
+          [[[ return ['unknown', 'unavailable', 'offline', 'error', 'fault',
+                      '离线', '异常', '故障', '不可用'].includes(entity.state.toLowerCase()); ]]]
+        styles:
+          card:
+            - border-inline-start: 4px solid var(--primary-color)
+          state:
+            - color: var(--primary-color)
+
 views:
   - title: 客厅
     path: live
-    type: sidebar
-    cards:
-      - type: custom:webrtc-camera
-        url: micam00
-        ui: true
-        muted: true
-        style: &player_style |
-          ha-card {
-            display: block;
-            width: min(calc(100% - 48px), 1120px);
-            height: auto;
-            margin: 24px auto;
-          }
-          @media (max-width: 600px) {
-            ha-card {
-              width: calc(100% - 24px);
-              margin: 12px auto;
-            }
-          }
-          video {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-height: 75dvh;
-            object-fit: contain;
-          }
-          :fullscreen video, video:fullscreen {
-            max-height: 100dvh;
-          }
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 设备状态
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('0d15113cc42d14c1ff5b353124a64aa6'))
-               | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
-               | map(attribute='entity_id') | list }}
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 摄像头控制
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('0d15113cc42d14c1ff5b353124a64aa6'))
-               | selectattr('domain', 'in', ['switch', 'select', 'light'])
-               | map(attribute='entity_id') | list }}
-      - type: logbook
-        view_layout:
-          position: sidebar
-        title: 最近 24 小时活动
-        hours_to_show: 24
-        target:
-          device_id: 0d15113cc42d14c1ff5b353124a64aa6
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 客厅 · 实时画面
+            icon: mdi:cctv
+          - type: custom:webrtc-camera
+            url: micam00
+            muted: true
+            ui: true
+            grid_options: &video_grid
+              columns: full
+              rows: auto
+            style: &player_style |
+              ha-card {
+                display: block;
+                width: min(100%, 1120px);
+                margin-inline: auto;
+                overflow: hidden;
+                background: #101820;
+              }
+              video {
+                display: block;
+                width: 100%;
+                height: auto;
+                max-height: 75dvh;
+                object-fit: contain;
+              }
+              :fullscreen video, video:fullscreen { max-height: 100dvh; }
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            grid_options: *video_grid
+            show_empty: false
+            card:
+              type: grid
+              title: 设备状态
+              columns: 2
+              square: false
+            card_param: cards
+            filter:
+              template: >-
+                {% set device = '0d15113cc42d14c1ff5b353124a64aa6' %}
+                {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
+                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% for item in expand(device_entities(device))
+                   | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | sort(attribute='entity_id') %}
+                  {% set label = item.name.removeprefix(prefix)
+                     | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
+                  {% set stream = '流状态' in label %}
+                  {% set storage = '存储卡' in item.name and '工作状态' in label %}
+                  {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
+                     if stream else '存储卡' if storage else label %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
+                  {% if stream %}{% set ns.stream = ns.stream + [tile] %}
+                  {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
+                  {% else %}{% set ns.other = ns.other + [tile] %}
+                  {% endif %}
+                {% endfor %}
+                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+          - type: heading
+            heading: 最近 24 小时活动
+            icon: mdi:timeline-clock-outline
+          - type: logbook
+            grid_options: *video_grid
+            hours_to_show: 24
+            target:
+              device_id: 0d15113cc42d14c1ff5b353124a64aa6
   - title: 书房小方
     path: study
-    type: sidebar
-    cards:
-      - type: custom:webrtc-camera
-        url: micam01
-        ui: true
-        muted: true
-        style: *player_style
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 设备状态
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('5f2605a70b0d0ee19911f1609ec58718'))
-               | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
-               | map(attribute='entity_id') | list }}
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 摄像头控制
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('5f2605a70b0d0ee19911f1609ec58718'))
-               | selectattr('domain', 'in', ['switch', 'select', 'light'])
-               | map(attribute='entity_id') | list }}
-      - type: logbook
-        view_layout:
-          position: sidebar
-        title: 最近 24 小时活动
-        hours_to_show: 24
-        target:
-          device_id: 5f2605a70b0d0ee19911f1609ec58718
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 书房小方 · 实时画面
+            icon: mdi:cctv
+          - type: custom:webrtc-camera
+            url: micam01
+            muted: true
+            ui: true
+            grid_options: *video_grid
+            style: *player_style
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            grid_options: *video_grid
+            show_empty: false
+            card:
+              type: grid
+              title: 设备状态
+              columns: 2
+              square: false
+            card_param: cards
+            filter:
+              template: >-
+                {% set device = '5f2605a70b0d0ee19911f1609ec58718' %}
+                {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
+                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% for item in expand(device_entities(device))
+                   | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | sort(attribute='entity_id') %}
+                  {% set label = item.name.removeprefix(prefix)
+                     | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
+                  {% set stream = '流状态' in label %}
+                  {% set storage = '存储卡' in item.name and '工作状态' in label %}
+                  {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
+                     if stream else '存储卡' if storage else label %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
+                  {% if stream %}{% set ns.stream = ns.stream + [tile] %}
+                  {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
+                  {% else %}{% set ns.other = ns.other + [tile] %}
+                  {% endif %}
+                {% endfor %}
+                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+          - type: heading
+            heading: 最近 24 小时活动
+            icon: mdi:timeline-clock-outline
+          - type: logbook
+            grid_options: *video_grid
+            hours_to_show: 24
+            target:
+              device_id: 5f2605a70b0d0ee19911f1609ec58718
   - title: 次卧
     path: bedroom
-    type: sidebar
-    cards:
-      - type: custom:webrtc-camera
-        url: micam02
-        ui: true
-        muted: true
-        style: *player_style
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 设备状态
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('3c9af38032e32992c9661b1960bc230b'))
-               | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
-               | map(attribute='entity_id') | list }}
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 摄像头控制
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('3c9af38032e32992c9661b1960bc230b'))
-               | selectattr('domain', 'in', ['switch', 'select', 'light'])
-               | map(attribute='entity_id') | list }}
-      - type: logbook
-        view_layout:
-          position: sidebar
-        title: 最近 24 小时活动
-        hours_to_show: 24
-        target:
-          device_id: 3c9af38032e32992c9661b1960bc230b
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 次卧 · 实时画面
+            icon: mdi:cctv
+          - type: custom:webrtc-camera
+            url: micam02
+            muted: true
+            ui: true
+            grid_options: *video_grid
+            style: *player_style
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            grid_options: *video_grid
+            show_empty: false
+            card:
+              type: grid
+              title: 设备状态
+              columns: 2
+              square: false
+            card_param: cards
+            filter:
+              template: >-
+                {% set device = '3c9af38032e32992c9661b1960bc230b' %}
+                {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
+                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% for item in expand(device_entities(device))
+                   | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | sort(attribute='entity_id') %}
+                  {% set label = item.name.removeprefix(prefix)
+                     | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
+                  {% set stream = '流状态' in label %}
+                  {% set storage = '存储卡' in item.name and '工作状态' in label %}
+                  {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
+                     if stream else '存储卡' if storage else label %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
+                  {% if stream %}{% set ns.stream = ns.stream + [tile] %}
+                  {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
+                  {% else %}{% set ns.other = ns.other + [tile] %}
+                  {% endif %}
+                {% endfor %}
+                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+          - type: heading
+            heading: 最近 24 小时活动
+            icon: mdi:timeline-clock-outline
+          - type: logbook
+            grid_options: *video_grid
+            hours_to_show: 24
+            target:
+              device_id: 3c9af38032e32992c9661b1960bc230b
   - title: 阳台小方
     path: balcony
-    type: sidebar
-    cards:
-      - type: custom:webrtc-camera
-        url: micam03
-        ui: true
-        muted: true
-        style: *player_style
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 设备状态
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('13667c0a32584b1dc784505e6653c31f'))
-               | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
-               | map(attribute='entity_id') | list }}
-      - type: custom:auto-entities
-        view_layout:
-          position: sidebar
-        show_empty: false
-        card:
-          type: entities
-          title: 摄像头控制
-          show_header_toggle: false
-        filter:
-          template: >-
-            {{ expand(device_entities('13667c0a32584b1dc784505e6653c31f'))
-               | selectattr('domain', 'in', ['switch', 'select', 'light'])
-               | map(attribute='entity_id') | list }}
-      - type: logbook
-        view_layout:
-          position: sidebar
-        title: 最近 24 小时活动
-        hours_to_show: 24
-        target:
-          device_id: 13667c0a32584b1dc784505e6653c31f
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: 阳台小方 · 实时画面
+            icon: mdi:cctv
+          - type: custom:webrtc-camera
+            url: micam03
+            muted: true
+            ui: true
+            grid_options: *video_grid
+            style: *player_style
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            grid_options: *video_grid
+            show_empty: false
+            card:
+              type: grid
+              title: 设备状态
+              columns: 2
+              square: false
+            card_param: cards
+            filter:
+              template: >-
+                {% set device = '13667c0a32584b1dc784505e6653c31f' %}
+                {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
+                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% for item in expand(device_entities(device))
+                   | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
+                   | sort(attribute='entity_id') %}
+                  {% set label = item.name.removeprefix(prefix)
+                     | regex_replace('^(视频流管理|存储卡管理|摄像机控制) +', '') %}
+                  {% set stream = '流状态' in label %}
+                  {% set storage = '存储卡' in item.name and '工作状态' in label %}
+                  {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
+                     if stream else '存储卡' if storage else label %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
+                  {% if stream %}{% set ns.stream = ns.stream + [tile] %}
+                  {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
+                  {% else %}{% set ns.other = ns.other + [tile] %}
+                  {% endif %}
+                {% endfor %}
+                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+          - type: heading
+            heading: 最近 24 小时活动
+            icon: mdi:timeline-clock-outline
+          - type: logbook
+            grid_options: *video_grid
+            hours_to_show: 24
+            target:
+              device_id: 13667c0a32584b1dc784505e6653c31f
