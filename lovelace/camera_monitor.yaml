@@ -1,3 +1,43 @@
+button_card_templates:
+  camera_status:
+    show_state: true
+    show_icon: false
+    tap_action:
+      action: more-info
+    styles:
+      card:
+        - border-radius: 0
+        - box-shadow: none
+        - padding: 14px 16px
+        - text-align: left
+        - background: var(--ha-card-background, var(--card-background-color))
+      grid:
+        - grid-template-areas: '"s" "n"'
+        - grid-template-columns: minmax(0, 1fr)
+        - gap: 6px
+      state:
+        - justify-self: start
+        - max-width: 100%
+        - font-size: clamp(20px, 2vw, 30px)
+        - line-height: 1.2
+        - font-weight: 500
+        - font-variant-numeric: tabular-nums
+      name:
+        - justify-self: start
+        - max-width: 100%
+        - font-size: 13px
+        - color: var(--secondary-text-color)
+    state:
+      - operator: template
+        value: >
+          [[[ return ['unknown', 'unavailable', 'offline', 'error', 'fault',
+                      '离线', '异常', '故障', '不可用'].includes(entity.state.toLowerCase()); ]]]
+        styles:
+          card:
+            - border-inline-start: 4px solid var(--primary-color)
+          state:
+            - color: var(--primary-color)
+
 views:
   - title: 客厅
     path: live
@@ -58,10 +98,8 @@ views:
                   {% set storage = '存储卡' in item.name and '工作状态' in label %}
                   {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
                      if stream else '存储卡' if storage else label %}
-                  {% set alert = item.state | lower in ['unknown', 'unavailable', 'offline',
-                     'error', 'fault', '离线', '异常', '故障', '不可用'] %}
-                  {% set tile = dict(type='tile', entity=item.entity_id, name=title,
-                                     vertical=true, color='red' if alert else 'primary') %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
@@ -119,10 +157,8 @@ views:
                   {% set storage = '存储卡' in item.name and '工作状态' in label %}
                   {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
                      if stream else '存储卡' if storage else label %}
-                  {% set alert = item.state | lower in ['unknown', 'unavailable', 'offline',
-                     'error', 'fault', '离线', '异常', '故障', '不可用'] %}
-                  {% set tile = dict(type='tile', entity=item.entity_id, name=title,
-                                     vertical=true, color='red' if alert else 'primary') %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
@@ -180,10 +216,8 @@ views:
                   {% set storage = '存储卡' in item.name and '工作状态' in label %}
                   {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
                      if stream else '存储卡' if storage else label %}
-                  {% set alert = item.state | lower in ['unknown', 'unavailable', 'offline',
-                     'error', 'fault', '离线', '异常', '故障', '不可用'] %}
-                  {% set tile = dict(type='tile', entity=item.entity_id, name=title,
-                                     vertical=true, color='red' if alert else 'primary') %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
@@ -241,10 +275,8 @@ views:
                   {% set storage = '存储卡' in item.name and '工作状态' in label %}
                   {% set title = ('视频流' if not ns.stream else '视频流 ' ~ (ns.stream | length + 1))
                      if stream else '存储卡' if storage else label %}
-                  {% set alert = item.state | lower in ['unknown', 'unavailable', 'offline',
-                     'error', 'fault', '离线', '异常', '故障', '不可用'] %}
-                  {% set tile = dict(type='tile', entity=item.entity_id, name=title,
-                                     vertical=true, color='red' if alert else 'primary') %}
+                  {% set tile = dict(type='custom:button-card', template='camera_status',
+                                     entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
