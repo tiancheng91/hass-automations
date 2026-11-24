@@ -72,7 +72,6 @@ homeassistant:
     baby_feeding: !include packages/baby_feeding.yaml
     camera_monitor: !include packages/camera_monitor.yaml
     home_lighting: !include packages/home_lighting.yaml
-    home_network: !include packages/home_network.yaml
 ```
 
 ### 2. 配置密钥
@@ -188,13 +187,7 @@ cp secrets.yaml.example secrets.yaml
 
 ## 仪表盘面板
 
-- **灯光**（`/home-lighting/rooms`）— 按五个房间展示自动化中使用的照明回路和灯具。包含 4 个灯具实体和 7 个开关控制的照明回路。点图标切换，书房灯带、卫生间筒灯组可直接调光。
-- **网关**（`/home-network/overview`）— 顶部展示光猫、水星路由、AP、N1 旁路由、Tailscale 远端链路和 M4 mini。线路图按 Prometheus 探测结果标注延迟、不可达或暂无数据，未配置探测的节点显示「未探测」。侧栏显示网关遥测、Ping 明细和 Grafana 入口，独立的「地址簿」收录 20 条 DHCP 保留地址。在线状态取自 HA 中 IP 匹配的路由跟踪实体，无匹配数据时显示「未确认」。其余终端的 AP 归属待关联表确认。
-
-网关面板每 60 秒从 Grafana Cloud Prometheus 读取 Telegraf Ping 状态、延迟和丢包率。启用前在 HA 配置目录的 `secrets.yaml` 填入 `grafana_prometheus_user` 与 `grafana_prometheus_token`，参见 `secrets.yaml.example`。phx01 的探测目标是 10.0.10.2，拓扑中的 Tailscale 地址是 100.64.1.2。
-
-两个面板分别由 `packages/home_lighting.yaml` 和 `packages/home_network.yaml` 注册，布局在 `lovelace/` 下的同名文件。同步两个目录，按上方示例在 HA 实际配置中引入 package，检查配置并重启即可加载侧栏入口。
-
+- **灯光**（`/home-lighting/rooms`）— 分为「客厅 · 书房」和「玄关 · 厨房 · 卫生间」两组，磁贴标明所属房间。包含 4 个灯具实体和 7 个开关控制的照明回路。每张磁贴都有独立开关，书房灯带、卫生间筒灯组可直接调光。
 - **监控** — 默认播放客厅，点击顶部房间标签可直接切换到书房小方、次卧或阳台小方，每次显示一路。右栏需要 HACS 前端卡片 auto-entities 和 button-card，以 Metro 风格磁贴优先显示视频流和存储卡状态，每个房间最多显示六项摘要；card-mod 统一磁贴间距与活动卡片样式。下方列出最近 24 小时活动，管理员可从「查看设备详情」查看全部实体。将 `packages/camera_monitor.yaml` 和 `lovelace/camera_monitor.yaml` 按目录放入 HA 配置目录，按上例加载 package（已通过 `!include_dir_named packages` 加载的可跳过），检查配置并重启后打开侧栏的「监控」。若手动管理 YAML 前端资源，请将 `/webrtc/webrtc-camera.js` 加入资源列表，类型为 `module`。
 
 - **婴儿护理面板** — 喂奶/换尿布记录操作面板，含 24h 喂养间隔图表

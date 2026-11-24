@@ -2,16 +2,16 @@ views:
   - title: 灯光
     path: rooms
     type: sections
-    max_columns: 3
+    max_columns: 2
     sections:
       - type: grid
         cards:
           - type: heading
-            heading: 客厅
-            icon: mdi:lightbulb-group-outline
+            heading: 客厅 · 书房
+            icon: mdi:sofa-outline
           - type: tile
             entity: switch.lumi_cn_551288517_acn032_on_p_2_1
-            name: 主灯回路
+            name: 客厅 S1E 左键 · 主灯
             color: primary
             card_mod: &lamp_surface
               style: |
@@ -27,58 +27,86 @@ views:
                 }
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
           - type: tile
             entity: switch.lumi_cn_551288517_acn032_on_p_3_1
-            name: 筒灯
+            name: 客厅 S1E 中键 · 筒灯
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
           - type: tile
             entity: switch.lumi_cn_551288517_acn032_on_p_4_1
-            name: 灯带
+            name: 客厅 S1E 右键 · 灯带
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
           - type: tile
             entity: light.ftd_cn_1087033247_ftdlmp_s_2_light
-            name: 主灯模式
+            name: 客厅 主灯模式
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
           - type: tile
             entity: light.hyd_cn_672580633_pro2_s_3_light
-            name: 晾衣机灯
+            name: 客厅 晾衣机灯
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
+          - type: tile
+            entity: light.nnleaf_cn_250150441_strips_s_2_light
+            name: 书房 Nanoleaf 灯带
+            color: primary
+            card_mod: *lamp_surface
+            icon_tap_action:
+              action: toggle
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: tile
+            entity: switch.giot_cn_1099597079_v6oodm_on_p_2_1
+            name: 书房 照明开关
+            color: primary
+            card_mod: *lamp_surface
+            icon_tap_action:
+              action: toggle
+            features:
+              - type: toggle
       - type: grid
         cards:
           - type: heading
-            heading: 玄关
-            icon: mdi:lightbulb-group-outline
+            heading: 玄关 · 厨房 · 卫生间
+            icon: mdi:home-outline
           - type: tile
             entity: switch.linp_cn_1080373159_q3s2_on_p_3_1
-            name: 筒灯
+            name: 玄关 筒灯
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
+            features:
+              - type: toggle
           - type: tile
             entity: switch.giot_cn_1088542711_v6oodm_on_p_2_1
-            name: 氛围灯
+            name: 玄关 氛围灯
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
-      - type: grid
-        cards:
-          - type: heading
-            heading: 厨房
-            icon: mdi:lightbulb-group-outline
+            features:
+              - type: toggle
           - type: tile
             entity: switch.giot_cn_1088662238_v6oodm_on_p_2_1
             name: 厨房灯
@@ -86,38 +114,15 @@ views:
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
-      - type: grid
-        cards:
-          - type: heading
-            heading: 书房
-            icon: mdi:lightbulb-group-outline
-          - type: tile
-            entity: light.nnleaf_cn_250150441_strips_s_2_light
-            name: Nanoleaf 灯带
-            color: primary
-            card_mod: *lamp_surface
-            icon_tap_action:
-              action: toggle
             features:
-              - type: light-brightness
-          - type: tile
-            entity: switch.giot_cn_1099597079_v6oodm_on_p_2_1
-            name: 照明开关
-            color: primary
-            card_mod: *lamp_surface
-            icon_tap_action:
-              action: toggle
-      - type: grid
-        cards:
-          - type: heading
-            heading: 卫生间
-            icon: mdi:lightbulb-group-outline
+              - type: toggle
           - type: tile
             entity: light.mijia_cn_group_1755950629190250500_group3_s_2_light
-            name: 筒灯组
+            name: 卫生间 筒灯组
             color: primary
             card_mod: *lamp_surface
             icon_tap_action:
               action: toggle
             features:
+              - type: toggle
               - type: light-brightness
