@@ -8,7 +8,8 @@ button_card_templates:
       card:
         - border-radius: 0
         - box-shadow: none
-        - padding: 14px 16px
+        - min-height: 84px
+        - padding: 12px clamp(10px, 1vw, 16px)
         - text-align: left
         - background: var(--ha-card-background, var(--card-background-color))
       grid:
@@ -25,6 +26,9 @@ button_card_templates:
       name:
         - justify-self: start
         - max-width: 100%
+        - white-space: normal
+        - overflow-wrap: anywhere
+        - line-height: 1.25
         - font-size: 13px
         - color: var(--secondary-text-color)
     state:
@@ -83,12 +87,15 @@ views:
               title: 设备状态
               columns: 2
               square: false
+              card_mod: &status_spacing
+                style: |
+                  :host { --grid-card-gap: 8px; }
             card_param: cards
             filter:
               template: >-
                 {% set device = '0d15113cc42d14c1ff5b353124a64aa6' %}
                 {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
-                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
                    | sort(attribute='entity_id') %}
@@ -102,19 +109,35 @@ views:
                                      entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif item.state | lower in ['offline', 'unavailable', 'error', 'fault', '离线', '异常', '故障', '不可用'] %}
+                    {% set ns.alerts = ns.alerts + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
                   {% else %}{% set ns.other = ns.other + [tile] %}
                   {% endif %}
                 {% endfor %}
-                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+                {{ (ns.stream[:1] + ns.storage[:1] + ns.alerts + ns.capacity + ns.other + ns.stream[1:] + ns.storage[1:])[:6] | to_json }}
           - type: heading
             heading: 最近 24 小时活动
             icon: mdi:timeline-clock-outline
           - type: logbook
             grid_options: *video_grid
+            card_mod: &activity_style
+              style: |
+                ha-card {
+                  border-radius: 0;
+                  box-shadow: none;
+                  border-block-start: 2px solid var(--primary-color);
+                }
             hours_to_show: 24
             target:
               device_id: 0d15113cc42d14c1ff5b353124a64aa6
+          - type: heading
+            heading: 查看设备详情
+            heading_style: subtitle
+            icon: mdi:arrow-top-right
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/0d15113cc42d14c1ff5b353124a64aa6
   - title: 书房小方
     path: study
     type: sections
@@ -142,12 +165,13 @@ views:
               title: 设备状态
               columns: 2
               square: false
+              card_mod: *status_spacing
             card_param: cards
             filter:
               template: >-
                 {% set device = '5f2605a70b0d0ee19911f1609ec58718' %}
                 {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
-                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
                    | sort(attribute='entity_id') %}
@@ -161,19 +185,29 @@ views:
                                      entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif item.state | lower in ['offline', 'unavailable', 'error', 'fault', '离线', '异常', '故障', '不可用'] %}
+                    {% set ns.alerts = ns.alerts + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
                   {% else %}{% set ns.other = ns.other + [tile] %}
                   {% endif %}
                 {% endfor %}
-                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+                {{ (ns.stream[:1] + ns.storage[:1] + ns.alerts + ns.capacity + ns.other + ns.stream[1:] + ns.storage[1:])[:6] | to_json }}
           - type: heading
             heading: 最近 24 小时活动
             icon: mdi:timeline-clock-outline
           - type: logbook
             grid_options: *video_grid
+            card_mod: *activity_style
             hours_to_show: 24
             target:
               device_id: 5f2605a70b0d0ee19911f1609ec58718
+          - type: heading
+            heading: 查看设备详情
+            heading_style: subtitle
+            icon: mdi:arrow-top-right
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/5f2605a70b0d0ee19911f1609ec58718
   - title: 次卧
     path: bedroom
     type: sections
@@ -201,12 +235,13 @@ views:
               title: 设备状态
               columns: 2
               square: false
+              card_mod: *status_spacing
             card_param: cards
             filter:
               template: >-
                 {% set device = '3c9af38032e32992c9661b1960bc230b' %}
                 {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
-                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
                    | sort(attribute='entity_id') %}
@@ -220,19 +255,29 @@ views:
                                      entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif item.state | lower in ['offline', 'unavailable', 'error', 'fault', '离线', '异常', '故障', '不可用'] %}
+                    {% set ns.alerts = ns.alerts + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
                   {% else %}{% set ns.other = ns.other + [tile] %}
                   {% endif %}
                 {% endfor %}
-                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+                {{ (ns.stream[:1] + ns.storage[:1] + ns.alerts + ns.capacity + ns.other + ns.stream[1:] + ns.storage[1:])[:6] | to_json }}
           - type: heading
             heading: 最近 24 小时活动
             icon: mdi:timeline-clock-outline
           - type: logbook
             grid_options: *video_grid
+            card_mod: *activity_style
             hours_to_show: 24
             target:
               device_id: 3c9af38032e32992c9661b1960bc230b
+          - type: heading
+            heading: 查看设备详情
+            heading_style: subtitle
+            icon: mdi:arrow-top-right
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/3c9af38032e32992c9661b1960bc230b
   - title: 阳台小方
     path: balcony
     type: sections
@@ -260,12 +305,13 @@ views:
               title: 设备状态
               columns: 2
               square: false
+              card_mod: *status_spacing
             card_param: cards
             filter:
               template: >-
                 {% set device = '13667c0a32584b1dc784505e6653c31f' %}
                 {% set prefix = (device_attr(device, 'name_by_user') or device_attr(device, 'name') or '') ~ ' ' %}
-                {% set ns = namespace(stream=[], storage=[], capacity=[], other=[]) %}
+                {% set ns = namespace(stream=[], storage=[], alerts=[], capacity=[], other=[]) %}
                 {% for item in expand(device_entities(device))
                    | selectattr('domain', 'in', ['sensor', 'binary_sensor', 'event'])
                    | sort(attribute='entity_id') %}
@@ -279,16 +325,26 @@ views:
                                      entity=item.entity_id, name=title) %}
                   {% if stream %}{% set ns.stream = ns.stream + [tile] %}
                   {% elif storage %}{% set ns.storage = ns.storage + [tile] %}
+                  {% elif item.state | lower in ['offline', 'unavailable', 'error', 'fault', '离线', '异常', '故障', '不可用'] %}
+                    {% set ns.alerts = ns.alerts + [tile] %}
                   {% elif '空间' in label or '容量' in label %}{% set ns.capacity = ns.capacity + [tile] %}
                   {% else %}{% set ns.other = ns.other + [tile] %}
                   {% endif %}
                 {% endfor %}
-                {{ (ns.stream[:1] + ns.storage + ns.capacity + ns.stream[1:] + ns.other) | to_json }}
+                {{ (ns.stream[:1] + ns.storage[:1] + ns.alerts + ns.capacity + ns.other + ns.stream[1:] + ns.storage[1:])[:6] | to_json }}
           - type: heading
             heading: 最近 24 小时活动
             icon: mdi:timeline-clock-outline
           - type: logbook
             grid_options: *video_grid
+            card_mod: *activity_style
             hours_to_show: 24
             target:
               device_id: 13667c0a32584b1dc784505e6653c31f
+          - type: heading
+            heading: 查看设备详情
+            heading_style: subtitle
+            icon: mdi:arrow-top-right
+            tap_action:
+              action: navigate
+              navigation_path: /config/devices/device/13667c0a32584b1dc784505e6653c31f
