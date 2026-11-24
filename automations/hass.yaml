@@ -42,7 +42,7 @@
 
 - alias: HASS - 备份配置
   id: hass_backup_config
-  description: 每7天创建一次配置备份（每周一执行）
+  description: 每周一按系统备份设置创建自动备份，保留策略由备份管理器执行
   triggers:
     - trigger: time
       at: "02:00:00"
@@ -50,23 +50,11 @@
     - condition: template
       value_template: "{{ now().weekday() == 0 }}"
   actions:
-    - service: backup.create
-      data:
-        name: "自动备份_{{ now().strftime('%Y%m%d_%H%M%S') }}"
-        password: ""
-        compressed: true
+    # 先在“设置 → 系统 → 备份”配置备份位置、内容和保留策略。
+    # 使用此自动化定时时，请关闭备份界面中的额外定时，避免重复备份。
+    - action: backup.create_automatic
   mode: single
 
-- alias: HASS - 清理旧备份
-  id: hass_cleanup_backups
-  description: 删除超过30天的旧备份，只保留最近5个
-  triggers:
-    - trigger: time
-      at: "02:30:00"
-  conditions: []
-  actions:
-    - action: python_script.cleanup_backups
-      data:
-        keep_days: 30
-        keep_count: 4
-  mode: single
+
+# 旧的 hass_cleanup_backups 自动化已移除。
+# 自动备份的清理由备份管理器按界面配置的保留策略执行，无需 python_script。

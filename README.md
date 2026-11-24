@@ -50,14 +50,15 @@
 将 [configuration.yaml.example](configuration.yaml.example) 中的配置合并到你的 `configuration.yaml`：
 
 ```yaml
-# 包含所有 input_number 配置
-input_number: !include_dir_merge_named inputs/
+# 按类型加载辅助输入，避免将 input_text 当成 input_number
+input_number: !include inputs/nnleaf_light.yaml
+input_text: !include inputs/air_purifier.yaml
 
 # 包含所有 automation 配置
-automation: !include_dir_list automations/
+automation: !include_dir_merge_list automations/
 
 # 包含所有 script 配置
-script: !include_dir_list scripts/
+script: !include_dir_merge_named scripts/
 
 # 包含所有 rest_command 配置
 rest_command: !include_dir_merge_named rest_commands/
@@ -151,8 +152,18 @@ cp secrets.yaml.example secrets.yaml
 | 初始化 | 系统启动 | 设置 Metro Red 主题 |
 | 清理日志 | 每天 04:00 | 清理传感器高频日志，保留 3 天 |
 | 清理数据库 | 每天 03:00 | 保留 30 天数据，执行 repack |
-| 配置备份 | 每周一 02:00 | 自动创建压缩备份 |
-| 清理旧备份 | 每天 02:30 | 删除超过 30 天的备份，保留最近 4 个 |
+| 配置备份 | 每周一 02:00 | 调用 `backup.create_automatic`，使用系统备份设置 |
+| 清理旧备份 | 由备份管理器执行 | 按备份界面设置的保留策略清理自动备份 |
+
+
+### 备份与旧配置迁移
+
+1. 在“设置 → 系统 → 备份”中配置自动备份的内容、位置和保留策略，并保存恢复所需的应急套件。
+2. 本仓库保留每周一 02:00 的自动化触发；使用它时关闭备份界面中的额外定时，避免重复备份。
+3. 原 `hass_cleanup_backups` 自动化引用的 `python_script.cleanup_backups` 不存在，现已移除。自动备份由备份管理器清理；既有手动备份应在备份页面核对后处理。
+4. 实际 `configuration.yaml` 也需按上面的示例修改 include：自动化合并列表，脚本合并字典，inputs 按类型加载。`scripts/xiaoai.yaml` 已定义 `xiaoai_speak`，无需删除净化器中的播报调用。
+5. 若修复页面提示 HTTP 配置已迁移，先在“设置 → 系统 → 网络”核对代理等配置，再移除实际 `configuration.yaml` 中的旧 `http:` 块。
+6. 部署后先运行 Home Assistant 的配置检查，再重启一次；确认备份成功、脚本存在，以及插件重启提示已消失。
 
 ## 模板实体
 

@@ -1,0 +1,47 @@
+# 环境温度控制面板（空调 & 风扇）
+# 依赖实体：packages/climate_master.yaml + packages/climate_baby.yaml + packages/climate_living.yaml
+
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      ### 环境温度控制
+      主卧、次卧、客厅空调自动化（无独立开关，始终生效）。
+
+  # 主卧
+  - type: entities
+    title: 主卧
+    show_header_toggle: false
+    entities:
+      - entity: climate.090615_cn_proxy_681594875_00003_ktf
+        name: 主卧空调
+      - entity: fan.dmaker_cn_659430584_p5c_s_2_fan
+        name: 主卧风扇
+
+  # 次卧（婴儿房）
+  - type: entities
+    title: 次卧（婴儿房）
+    show_header_toggle: false
+    entities:
+      - entity: climate.090615_cn_proxy_681594875_00002_ktf
+        name: 次卧空调
+
+  # 客厅
+  - type: entities
+    title: 客厅
+    show_header_toggle: false
+    entities:
+      - entity: climate.090615_cn_proxy_681594875_00004_ktf
+        name: 客厅空调
+
+  # 温度历史
+  - type: history-graph
+    title: 近 24h 温度趋势
+    hours_to_show: 24
+    entities:
+      - entity: climate.090615_cn_proxy_681594875_00003_ktf
+        name: 主卧
+      - entity: climate.090615_cn_proxy_681594875_00002_ktf
+        name: 次卧
+      - entity: climate.090615_cn_proxy_681594875_00004_ktf
+        name: 客厅
