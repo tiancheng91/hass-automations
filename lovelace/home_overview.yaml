@@ -1,81 +1,8 @@
-title: 首页
-views:
-  - title: 全部
-    path: all
-    cards:
-      - type: custom:auto-entities
-        card:
-          type: vertical-stack
-        card_param: cards
-        filter:
-          template: >-
-            {% set ordered = ['xuan_guan', 'ke_ting', 'zhu_wo', 'ci_wo',
-                              'shu_fang', 'wei_sheng_jian', 'yang_tai'] %}
-            {% set rooms = ordered + (areas() | reject('in', ordered) | list) %}
-            {% set result = namespace(cards=[]) %}
-            {% set visible = states | map(attribute='entity_id')
-               | reject('match', '^camera[.]') | reject('is_hidden_entity') | list %}
-            {% set speaker = device_id('notify.xiaomi_cn_702090184_l05c') %}
-            {% set hidden = namespace(devices=[], entities=[]) %}
-            {% set names = '小爱.*(音箱|音响)|体重秤|体脂秤|体成分秤' %}
-            {% for entity in visible %}
-              {% set device = device_id(entity) %}
-              {% set labels = [state_attr(entity, 'friendly_name') or '',
-                               device_attr(device, 'name') or '' if device else '',
-                               device_attr(device, 'name_by_user') or '' if device else ''] %}
-              {% if (device and device == speaker) or labels | select('search', names) | list %}
-                {% if device and device not in hidden.devices %}
-                  {% set hidden.devices = hidden.devices + [device] %}
-                  {% set hidden.entities = hidden.entities + device_entities(device) %}
-                {% elif not device %}
-                  {% set hidden.entities = hidden.entities + [entity] %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-            {% set visible = visible | reject('in', hidden.entities) | list %}
-            {% set assigned = areas() | map('area_entities') | sum(start=[]) %}
-            {% for room in rooms + [none] if room not in ['chu_fang', 'ji_ju'] %}
-              {% set ids = (visible | select('in', area_entities(room)) | list)
-                 if room else (visible | reject('in', assigned) | list) %}
-              {% if ids %}
-                {% set result.cards = result.cards + [dict(type='entities',
-                   title=area_name(room) if room else '未分配区域',
-                   show_header_toggle=false, entities=ids)] %}
-              {% endif %}
-            {% endfor %}
-            {{ result.cards }}
-  - title: 玄关
-    path: xuan_guan
-    strategy:
-      type: area
-      area: xuan_guan
-  - title: 客厅
-    path: ke_ting
-    strategy:
-      type: area
-      area: ke_ting
-  - title: 主卧
-    path: zhu_wo
-    strategy:
-      type: area
-      area: zhu_wo
-  - title: 次卧
-    path: ci_wo
-    strategy:
-      type: area
-      area: ci_wo
-  - title: 书房
-    path: shu_fang
-    strategy:
-      type: area
-      area: shu_fang
-  - title: 卫生间
-    path: wei_sheng_jian
-    strategy:
-      type: area
-      area: wei_sheng_jian
-  - title: 阳台
-    path: yang_tai
-    strategy:
-      type: area
-      area: yang_tai
+# 自定义仪表盘：原生概览首页 + 原生区域卡片的瀑布流布局。
+# 1. 将 www/native-home-masonry.js 部署到 HA 配置目录的 www/。
+# 2. 在“设置 → 仪表盘 → 资源”添加 /local/native-home-masonry.js?v=1，
+#    类型为 JavaScript 模块；资源入口通常需要开启个人资料中的高级模式。
+# 3. 将本文件完整粘贴到新建自定义仪表盘的原始配置编辑器。
+# 区域与导航自动按 HA 注册表生成，首页遵循原生展示规则。
+strategy:
+  type: custom:native-home-masonry

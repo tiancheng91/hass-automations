@@ -4,7 +4,7 @@
 - alias: 阳台 - 猫砂盆垃圾箱满了4小时提醒
   id: cat_litter_wastebin_full_reminder
   mode: single
-  description: 当猫砂盆垃圾箱状态持续为on超过4小时（表示垃圾箱已满且未清理），通过微信发送提醒
+  description: 当猫砂盆垃圾箱状态持续为on超过4小时（表示垃圾箱已满且未清理），在 Home Assistant 中提醒
   trigger:
     - platform: state
       entity_id: binary_sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_wastebin
@@ -13,15 +13,16 @@
       for:
         hours: 4
   action:
-    - service: script.claw_execute
+    - service: persistent_notification.create
       data:
-        message: "给微信群聊 高效信息传递群 发送 猫砂盆集便仓已满(4h)，请及时清理"
+        title: "阳台猫砂盆提醒"
+        message: "猫砂盆集便仓已满(4h)，请及时清理"
 
 # ========== 猫砂余量低于阈值提醒 ==========
 - alias: 阳台 - 猫砂盆猫砂重量低于6kg提醒补充
   id: cat_litter_weight_low_reminder
   mode: single
-  description: 当猫砂重量传感器数值低于6kg时，通过微信发送提醒补充猫砂
+  description: 当猫砂重量传感器数值低于6kg时，在 Home Assistant 中提醒补充猫砂
   trigger:
     - platform: numeric_state
       entity_id: sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_litter_weight
@@ -29,6 +30,7 @@
       for:
         hours: 1
   action:
-    - service: script.claw_execute
+    - service: persistent_notification.create
       data:
-        message: "给微信群聊 高效信息传递群 发送 猫砂盆猫砂余量低于6kg（当前{{ states('sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_litter_weight') }}kg），请及时补充猫砂"
+        title: "阳台猫砂盆提醒"
+        message: "猫砂盆猫砂余量低于6kg（当前{{ states('sensor.xiao_pei_zhi_neng_quan_zi_dong_mao_ce_suo_max2_litter_weight') }}kg），请及时补充猫砂"

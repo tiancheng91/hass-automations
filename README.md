@@ -13,7 +13,7 @@
 │   ├── device_air_purifier.yaml # 书房空气净化器
 │   ├── device_cat_litter.yaml   # 猫砂盆监控
 │   ├── device_fan.yaml          # 主卧风扇调速
-│   ├── hass.yaml                # 系统维护（主题/备份/清理）
+│   ├── hass.yaml                # 系统维护（主题/清理）
 │   ├── home_state_control.yaml  # 离家/回家模式
 │   ├── light_entrance.yaml      # 玄关灯光
 │   ├── light_kitchen.yaml       # 厨房灯光
@@ -25,7 +25,6 @@
 │   ├── climate_master.yaml      # 主卧空调与风扇
 │   └── climate_baby.yaml        # 次卧（婴儿房）空调
 ├── scripts/                     # 可复用脚本
-│   ├── claw.yaml                # Claw (OpenClaw) 自然语言任务执行
 │   ├── serverchan.yaml          # Server酱 消息推送
 │   └── xiaoai.yaml              # 小爱音箱 TTS 播报与指令执行
 ├── templates/                   # 模板实体
@@ -36,7 +35,6 @@
 │   ├── air_purifier.yaml        # 空气净化器播报日期记录
 │   └── nnleaf_light.yaml        # nnleaf 亮度模式状态
 ├── rest_commands/               # REST API 命令
-│   ├── claw.yaml                # Claw Chat Completions API
 │   └── serverchan.yaml          # Server酱 推送 API
 └── lovelace/                    # 仪表盘面板
     ├── baby_feeding_panel.yaml  # 婴儿护理面板
@@ -85,7 +83,6 @@ cp secrets.yaml.example secrets.yaml
 | 密钥 | 用途 |
 |------|------|
 | `serverchan_token` | Server酱 API Token，用于天气提醒、喂奶提醒等推送 |
-| `claw_token` | Claw OpenClaw API Bearer Token，用于猫砂盆提醒等微信消息 |
 
 ### 3. 重启 Home Assistant
 
@@ -138,8 +135,8 @@ cp secrets.yaml.example secrets.yaml
 
 | 设备 | 提醒 | 推送方式 |
 |------|------|----------|
-| 小佩猫砂盆 MAX2 | 垃圾箱满 4 小时未清理 | Claw → 微信群 |
-| 小佩猫砂盆 MAX2 | 猫砂余量 <6kg | Claw → 微信群 |
+| 小佩猫砂盆 MAX2 | 垃圾箱满 4 小时未清理 | Home Assistant 通知 |
+| 小佩猫砂盆 MAX2 | 猫砂余量 <6kg | Home Assistant 通知 |
 
 ### 提醒与通知
 
@@ -154,18 +151,17 @@ cp secrets.yaml.example secrets.yaml
 | 初始化 | 系统启动 | 设置 Metro Red 主题 |
 | 清理日志 | 每天 04:00 | 清理传感器高频日志，保留 3 天 |
 | 清理数据库 | 每天 03:00 | 保留 30 天数据，执行 repack |
-| 配置备份 | 每周一 02:00 | 调用 `backup.create_automatic`，使用系统备份设置 |
-| 清理旧备份 | 由备份管理器执行 | 按备份界面设置的保留策略清理自动备份 |
 
 
 ### 备份与旧配置迁移
 
-1. 在“设置 → 系统 → 备份”中配置自动备份的内容、位置和保留策略，并保存恢复所需的应急套件。
-2. 本仓库保留每周一 02:00 的自动化触发；使用它时关闭备份界面中的额外定时，避免重复备份。
-3. 原 `hass_cleanup_backups` 自动化引用的 `python_script.cleanup_backups` 不存在，现已移除。自动备份由备份管理器清理；既有手动备份应在备份页面核对后处理。
-4. 实际 `configuration.yaml` 也需按上面的示例修改 include：自动化合并列表，脚本合并字典，inputs 按类型加载。`scripts/xiaoai.yaml` 已定义 `xiaoai_speak`，无需删除净化器中的播报调用。
-5. 若修复页面提示 HTTP 配置已迁移，先在“设置 → 系统 → 网络”核对代理等配置，再移除实际 `configuration.yaml` 中的旧 `http:` 块。
-6. 部署后先运行 Home Assistant 的配置检查，再重启一次；确认备份成功、脚本存在，以及插件重启提示已消失。
+配置通过 Git 管理，数据库通过 Litestream 备份；仓库中的每周 HA 自动备份任务已移除。
+HA 界面中的自动备份定时独立配置，如已启用，可在“设置 → 系统 → 备份”中关闭。
+
+1. 实际 `configuration.yaml` 需按上面的示例修改 include：自动化合并列表，脚本合并字典，inputs 按类型加载。`scripts/xiaoai.yaml` 已定义 `xiaoai_speak`。
+2. 若修复页面提示 HTTP 配置已迁移，先在“设置 → 系统 → 网络”核对代理等配置，再移除实际 `configuration.yaml` 中的旧 `http:` 块。
+3. 部署后先运行 Home Assistant 的配置检查，再重新加载自动化；若修改了顶层加载配置，重启一次。
+
 
 ## 模板实体
 
@@ -181,11 +177,24 @@ cp secrets.yaml.example secrets.yaml
 | 脚本 | 用途 |
 |------|------|
 | `script.serverchan_push` | Server酱 推送消息（title + content） |
-| `script.claw_execute` | Claw 自然语言任务执行（如微信发消息） |
 | `script.xiaoai_speak` | 小爱音箱 TTS 语音播报 |
 | `script.xiaoai_execute` | 小爱音箱文本指令执行（如"打开客厅灯"） |
 
 ## 仪表盘面板
+
+### 自定义首页
+
+`lovelace/home_overview.yaml` 复用 HA 原生概览首页。点击房间后，由 `www/native-home-masonry.js` 调用原生区域策略，将分区转为瀑布流卡片组；分组标题、实体卡片、操作按钮与温湿度徽章沿用原生生成结果。所有区域及跳转路径自动生成，媒体播放器与未分配设备入口也可使用。
+
+1. 将 `www/native-home-masonry.js` 复制到实际 HA 配置目录的 `www/` 中。部署脚本需包含此目录。
+2. 开启个人资料中的高级模式，在“设置 → 仪表盘 → 资源”添加 `/local/native-home-masonry.js?v=1`，类型选择 JavaScript 模块。
+3. 新建一个空白仪表盘，在原始配置编辑器粘贴 `lovelace/home_overview.yaml` 的完整内容，保存并刷新浏览器。
+4. 如需作为默认首页，在个人资料的“外观 → 默认仪表盘”中选择它。
+
+首页遵循原生展示规则。旧版“全部”里的自定义隐藏规则不再应用，原内置概览的收藏等设置也不会自动复制，可在 YAML 的 `strategy` 下填写 `favorite_entities`。此版本使用原生卡片和瀑布流，无需 layout-card 或 auto-entities。
+
+该资源依赖 HA 前端原生策略接口，HA 升级后需要检查兼容性。更新 JavaScript 时同步调整资源 URL 的版本参数并刷新浏览器。
+
 
 - **灯光**（`/home-lighting/rooms`）— 分为「客厅 · 书房」和「玄关 · 厨房 · 卫生间」两组，磁贴标明所属房间。包含 4 个灯具实体和 7 个开关控制的照明回路。客厅米家主灯通过 S1E 左键通断电，接通后显示灯具亮度、颜色和色温控件，面板不提供灯具自身的软开关；书房灯带、卫生间筒灯组也可直接调光。
 - **监控** — 默认播放客厅，点击顶部房间标签可直接切换到书房小方、次卧或阳台小方，每次显示一路。右栏需要 HACS 前端卡片 auto-entities 和 button-card，以 Metro 风格磁贴优先显示视频流和存储卡状态，每个房间最多显示六项摘要；card-mod 统一磁贴间距与活动卡片样式。下方列出最近 24 小时活动，管理员可从「查看设备详情」查看全部实体。将 `packages/camera_monitor.yaml` 和 `lovelace/camera_monitor.yaml` 按目录放入 HA 配置目录，按上例加载 package（已通过 `!include_dir_named packages` 加载的可跳过），检查配置并重启后打开侧栏的「监控」。若手动管理 YAML 前端资源，请将 `/webrtc/webrtc-camera.js` 加入资源列表，类型为 `module`。
